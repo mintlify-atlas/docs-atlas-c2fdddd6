@@ -1,0 +1,109 @@
+{
+  "projectType": "api-service",
+  "projectName": "NOVA.ing Atención Médica",
+  "projectDescription": "A microservices-based medical appointment management system with semantic web capabilities for healthcare data integration.",
+  "theme": "palm",
+  "primaryColor": "#0ea5e9",
+  "lightColor": "#38bdf8",
+  "darkColor": "#0284c7",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/microservices",
+              "concepts/semantic-web",
+              "concepts/communication"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/setup",
+              "deployment/database",
+              "deployment/frontend"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Patient Service",
+            "pages": [
+              "api/paciente/overview",
+              "api/paciente/endpoints"
+            ]
+          },
+          {
+            "group": "Doctor Service",
+            "pages": [
+              "api/medico/overview",
+              "api/medico/endpoints"
+            ]
+          },
+          {
+            "group": "Appointment Service",
+            "pages": [
+              "api/cita/overview",
+              "api/cita/endpoints"
+            ]
+          },
+          {
+            "group": "Diagnosis Service",
+            "pages": [
+              "api/diagnostico/overview",
+              "api/diagnostico/endpoints"
+            ]
+          },
+          {
+            "group": "Semantic Web Service",
+            "pages": [
+              "api/semantic/overview",
+              "api/semantic/endpoints",
+              "api/semantic/sparql"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Microservices architecture with 5 independent services",
+    "Bidirectional inter-service communication using OpenFeign",
+    "Semantic web layer with RDF/OWL ontologies and SPARQL queries",
+    "RESTful APIs for patient, doctor, appointment, and diagnosis management",
+    "React-based frontend with real-time semantic search",
+    "Natural language medical data querying"
+  ],
+  "publicApiSurface": [
+    "GET /pacientes - List all patients",
+    "POST /pacientes - Create new patient",
+    "GET /pacientes/{id}/citas - Get patient appointments",
+    "GET /pacientes/{id}/historial-medico - Get medical history",
+    "GET /medicos - List all doctors",
+    "POST /medicos - Create new doctor",
+    "GET /medicos/{id}/citas - Get doctor appointments",
+    "GET /citas - List all appointments",
+    "POST /citas - Create appointment",
+    "GET /citas/con-detalle/{id} - Get detailed appointment",
+    "GET /diagnosticos - List all diagnoses",
+    "POST /diagnosticos - Create diagnosis",
+    "GET /diagnosticos/con-detalle/{id} - Get detailed diagnosis",
+    "GET /api/v1/semantic/buscar - Natural language search",
+    "POST /api/v1/semantic/sync - Sync medical data to RDF graph",
+    "POST /api/v1/semantic/sparql - Execute SPARQL queries"
+  ]
+}
