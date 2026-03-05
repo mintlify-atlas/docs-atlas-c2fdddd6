@@ -1,0 +1,664 @@
+---
+title: Patient Service Endpoints
+description: Complete API reference for all Patient Service endpoints
+---
+
+## List All Patients
+
+<api method="GET" endpoint="/pacientes">
+  Retrieves a list of all patients in the system.
+</api>
+
+### Response
+
+<ResponseField name="array" type="PacienteEntity[]">
+  Array of patient objects
+</ResponseField>
+
+<Expandable title="Patient Object Properties">
+  <ResponseField name="id" type="Long">Patient ID</ResponseField>
+  <ResponseField name="nombres" type="String">First name(s)</ResponseField>
+  <ResponseField name="apellidos" type="String">Last name(s)</ResponseField>
+  <ResponseField name="fechaNacimiento" type="Date">Date of birth</ResponseField>
+  <ResponseField name="genero" type="String">Gender (MASCULINO/FEMENINO)</ResponseField>
+  <ResponseField name="dni" type="String">National ID</ResponseField>
+  <ResponseField name="telefono" type="String">Phone number</ResponseField>
+  <ResponseField name="email" type="String">Email address</ResponseField>
+  <ResponseField name="direccion" type="String">Address</ResponseField>
+  <ResponseField name="estado" type="String">Status (ACTIVO/INACTIVO)</ResponseField>
+  <ResponseField name="usuarioId" type="Long">User account ID</ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8001/pacientes
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "nombres": "Juan Carlos",
+    "apellidos": "Pérez García",
+    "fechaNacimiento": "1990-05-15T00:00:00.000Z",
+    "genero": "MASCULINO",
+    "dni": "12345678",
+    "telefono": "987654321",
+    "email": "juan.perez@email.com",
+    "direccion": "Av. Principal 123, Lima",
+    "estado": "ACTIVO",
+    "usuarioId": 5
+  }
+]
+```
+
+---
+
+## Get Patient by ID
+
+<api method="GET" endpoint="/pacientes/{id}">
+  Retrieves detailed information for a specific patient.
+</api>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient
+</ParamField>
+
+### Response
+
+<ResponseField name="patient" type="PacienteEntity">
+  Patient object with all details
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8001/pacientes/1
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "nombres": "Juan Carlos",
+  "apellidos": "Pérez García",
+  "fechaNacimiento": "1990-05-15T00:00:00.000Z",
+  "genero": "MASCULINO",
+  "dni": "12345678",
+  "telefono": "987654321",
+  "email": "juan.perez@email.com",
+  "direccion": "Av. Principal 123, Lima",
+  "estado": "ACTIVO",
+  "usuarioId": 5
+}
+```
+
+### Error Response (404)
+
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Create Patient
+
+<api method="POST" endpoint="/pacientes">
+  Creates a new patient record in the system.
+</api>
+
+### Request Body
+
+<ParamField body="paciente" type="object" required>
+  Patient information wrapped in a DTO
+  
+  <Expandable title="paciente properties">
+    <ParamField body="nombres" type="String" required>
+      Patient's first name(s) - cannot be blank
+    </ParamField>
+    
+    <ParamField body="apellidos" type="String" required>
+      Patient's last name(s) - cannot be blank
+    </ParamField>
+    
+    <ParamField body="fechaNacimiento" type="Date" required>
+      Date of birth in ISO format (YYYY-MM-DD)
+    </ParamField>
+    
+    <ParamField body="genero" type="String" required>
+      Gender: `MASCULINO` or `FEMENINO`
+    </ParamField>
+    
+    <ParamField body="dni" type="String" required>
+      National ID - must match pattern `^[1-9][0-9]{7}$` and be unique
+    </ParamField>
+    
+    <ParamField body="telefono" type="String" required>
+      Phone number - must match pattern `^9[0-9]{8}$` and be unique
+    </ParamField>
+    
+    <ParamField body="email" type="String" required>
+      Valid email address - must be unique
+    </ParamField>
+    
+    <ParamField body="direccion" type="String" required>
+      Physical address - cannot be blank
+    </ParamField>
+    
+    <ParamField body="estado" type="String" required>
+      Patient status: `ACTIVO` or `INACTIVO`
+    </ParamField>
+    
+    <ParamField body="usuarioId" type="Long">
+      Associated user account ID (optional)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="patient" type="PacienteEntity">
+  The created patient object with generated ID
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8001/pacientes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paciente": {
+      "nombres": "María Elena",
+      "apellidos": "Rodríguez López",
+      "fechaNacimiento": "1985-08-20",
+      "genero": "FEMENINO",
+      "dni": "23456789",
+      "telefono": "987123456",
+      "email": "maria.rodriguez@email.com",
+      "direccion": "Jr. Los Pinos 456, Cusco",
+      "estado": "ACTIVO"
+    }
+  }'
+```
+
+### Example Response (201)
+
+```json
+{
+  "id": 2,
+  "nombres": "María Elena",
+  "apellidos": "Rodríguez López",
+  "fechaNacimiento": "1985-08-20T00:00:00.000Z",
+  "genero": "FEMENINO",
+  "dni": "23456789",
+  "telefono": "987123456",
+  "email": "maria.rodriguez@email.com",
+  "direccion": "Jr. Los Pinos 456, Cusco",
+  "estado": "ACTIVO",
+  "usuarioId": null
+}
+```
+
+### Error Response (400)
+
+```json
+{
+  "dni": "El campo dni must match pattern ^[1-9][0-9]{7}$",
+  "email": "El campo email must be a valid email address"
+}
+```
+
+---
+
+## Update Patient
+
+<api method="PUT" endpoint="/pacientes/{id}">
+  Updates an existing patient's information.
+</api>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="patient" type="PacienteEntity" required>
+  Complete patient object with updated information (same structure as create)
+</ParamField>
+
+### Response
+
+<ResponseField name="patient" type="PacienteEntity">
+  The updated patient object
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:8001/pacientes/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombres": "Juan Carlos",
+    "apellidos": "Pérez García",
+    "fechaNacimiento": "1990-05-15",
+    "genero": "MASCULINO",
+    "dni": "12345678",
+    "telefono": "987654321",
+    "email": "juan.perez.nuevo@email.com",
+    "direccion": "Av. Principal 123, Lima - Actualizado",
+    "estado": "ACTIVO"
+  }'
+```
+
+### Example Response (201)
+
+```json
+{
+  "id": 1,
+  "nombres": "Juan Carlos",
+  "apellidos": "Pérez García",
+  "fechaNacimiento": "1990-05-15T00:00:00.000Z",
+  "genero": "MASCULINO",
+  "dni": "12345678",
+  "telefono": "987654321",
+  "email": "juan.perez.nuevo@email.com",
+  "direccion": "Av. Principal 123, Lima - Actualizado",
+  "estado": "ACTIVO",
+  "usuarioId": 5
+}
+```
+
+### Error Response (404)
+
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Delete Patient (Soft Delete)
+
+<api method="DELETE" endpoint="/pacientes/{id}">
+  Performs a soft delete on a patient record (sets estado to INACTIVO).
+</api>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient to delete
+</ParamField>
+
+### Response
+
+```
+HTTP 204 No Content
+```
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:8001/pacientes/1
+```
+
+### Error Response (404)
+
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Delete Patient Permanently
+
+<api method="DELETE" endpoint="/pacientes/{id}/force">
+  Permanently deletes a patient record from the database. This action cannot be undone.
+</api>
+
+<Warning>
+  This is a destructive operation. The patient record will be permanently removed from the database.
+</Warning>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient to permanently delete
+</ParamField>
+
+### Response
+
+```
+HTTP 204 No Content
+```
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:8001/pacientes/1/force
+```
+
+### Error Response (404)
+
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Get Patient Appointments
+
+<api method="GET" endpoint="/pacientes/{id}/citas">
+  Retrieves all appointments (citas) for a specific patient.
+</api>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient
+</ParamField>
+
+### Response
+
+<ResponseField name="array" type="Cita[]">
+  Array of appointment objects
+</ResponseField>
+
+<Expandable title="Cita Object Properties">
+  <ResponseField name="id" type="Long">Appointment ID</ResponseField>
+  <ResponseField name="fechaCita" type="Date">Appointment date</ResponseField>
+  <ResponseField name="horaInicio" type="String">Start time</ResponseField>
+  <ResponseField name="horaFin" type="String">End time</ResponseField>
+  <ResponseField name="motivo" type="String">Reason for appointment</ResponseField>
+  <ResponseField name="estado" type="String">Appointment status</ResponseField>
+  <ResponseField name="medicoId" type="Long">Doctor ID</ResponseField>
+  <ResponseField name="pacienteId" type="Long">Patient ID</ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8001/pacientes/1/citas
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 10,
+    "fechaCita": "2026-03-10T00:00:00.000Z",
+    "horaInicio": "09:00",
+    "horaFin": "09:30",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "medicoId": 3,
+    "pacienteId": 1
+  },
+  {
+    "id": 15,
+    "fechaCita": "2026-03-15T00:00:00.000Z",
+    "horaInicio": "14:00",
+    "horaFin": "14:30",
+    "motivo": "Control mensual",
+    "estado": "CONFIRMADA",
+    "medicoId": 5,
+    "pacienteId": 1
+  }
+]
+```
+
+### Error Response (404)
+
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Schedule Appointment
+
+<api method="POST" endpoint="/pacientes/agendar-cita">
+  Schedules a new appointment from the patient module.
+</api>
+
+### Request Body
+
+<ParamField body="cita" type="object" required>
+  Appointment information
+  
+  <Expandable title="cita properties">
+    <ParamField body="fechaCita" type="Date" required>
+      Date of the appointment
+    </ParamField>
+    
+    <ParamField body="horaInicio" type="String" required>
+      Start time (e.g., "09:00")
+    </ParamField>
+    
+    <ParamField body="horaFin" type="String" required>
+      End time (e.g., "09:30")
+    </ParamField>
+    
+    <ParamField body="motivo" type="String" required>
+      Reason for the appointment
+    </ParamField>
+    
+    <ParamField body="estado" type="String">
+      Appointment status (default: "PROGRAMADA")
+    </ParamField>
+    
+    <ParamField body="medicoId" type="Long" required>
+      ID of the doctor
+    </ParamField>
+    
+    <ParamField body="pacienteId" type="Long" required>
+      ID of the patient
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="cita" type="Cita">
+  The created appointment object
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8001/pacientes/agendar-cita \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fechaCita": "2026-03-20",
+    "horaInicio": "10:00",
+    "horaFin": "10:30",
+    "motivo": "Consulta dermatológica",
+    "estado": "PROGRAMADA",
+    "medicoId": 7,
+    "pacienteId": 1
+  }'
+```
+
+### Example Response (201)
+
+```json
+{
+  "id": 20,
+  "fechaCita": "2026-03-20T00:00:00.000Z",
+  "horaInicio": "10:00",
+  "horaFin": "10:30",
+  "motivo": "Consulta dermatológica",
+  "estado": "PROGRAMADA",
+  "medicoId": 7,
+  "pacienteId": 1
+}
+```
+
+### Error Response (400)
+
+```json
+{
+  "error": "Doctor not available at specified time"
+}
+```
+
+---
+
+## Change Appointment Status
+
+<api method="PATCH" endpoint="/pacientes/{pacienteId}/citas/{citaId}/estado">
+  Changes the status of an appointment. Only the patient who owns the appointment can change its status.
+</api>
+
+### Path Parameters
+
+<ParamField path="pacienteId" type="Long" required>
+  The unique identifier of the patient
+</ParamField>
+
+<ParamField path="citaId" type="Long" required>
+  The unique identifier of the appointment
+</ParamField>
+
+### Request Body
+
+<ParamField body="estado" type="String" required>
+  The new status for the appointment
+</ParamField>
+
+### Response
+
+<ResponseField name="cita" type="Cita">
+  The updated appointment object
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X PATCH http://localhost:8001/pacientes/1/citas/10/estado \
+  -H "Content-Type: application/json" \
+  -d '{
+    "estado": "CANCELADA"
+  }'
+```
+
+### Example Response (200)
+
+```json
+{
+  "id": 10,
+  "fechaCita": "2026-03-10T00:00:00.000Z",
+  "horaInicio": "09:00",
+  "horaFin": "09:30",
+  "motivo": "Consulta general",
+  "estado": "CANCELADA",
+  "medicoId": 3,
+  "pacienteId": 1
+}
+```
+
+### Error Responses
+
+**400 Bad Request** - Missing estado field:
+```json
+{
+  "error": "Se requiere campo 'estado'"
+}
+```
+
+**403 Forbidden** - Patient doesn't own the appointment:
+```json
+{
+  "error": "You are not authorized to modify this appointment"
+}
+```
+
+**404 Not Found** - Appointment or patient not found:
+```
+HTTP 404 Not Found
+```
+
+---
+
+## Get Medical History
+
+<api method="GET" endpoint="/pacientes/{id}/historial-medico">
+  Retrieves the complete medical history (all diagnoses) for a patient.
+</api>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the patient
+</ParamField>
+
+### Response
+
+<ResponseField name="array" type="Diagnostico[]">
+  Array of diagnosis objects
+</ResponseField>
+
+<Expandable title="Diagnostico Object Properties">
+  <ResponseField name="id" type="Long">Diagnosis ID</ResponseField>
+  <ResponseField name="descripcion" type="String">Diagnosis description</ResponseField>
+  <ResponseField name="tipoDiagnostico" type="String">Type of diagnosis</ResponseField>
+  <ResponseField name="fechaDiagnostico" type="Date">Date of diagnosis</ResponseField>
+  <ResponseField name="citaId" type="Long">Associated appointment ID</ResponseField>
+  <ResponseField name="pacienteId" type="Long">Patient ID</ResponseField>
+  <ResponseField name="activo" type="boolean">Whether diagnosis is active</ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8001/pacientes/1/historial-medico
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 5,
+    "descripcion": "Hipertensión arterial controlada",
+    "tipoDiagnostico": "CRONICO",
+    "fechaDiagnostico": "2025-01-15T00:00:00.000Z",
+    "citaId": 8,
+    "pacienteId": 1,
+    "activo": true
+  },
+  {
+    "id": 12,
+    "descripcion": "Infección respiratoria aguda",
+    "tipoDiagnostico": "AGUDO",
+    "fechaDiagnostico": "2026-02-10T00:00:00.000Z",
+    "citaId": 15,
+    "pacienteId": 1,
+    "activo": false
+  }
+]
+```
+
+---
+
+## Endpoint Summary
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/pacientes` | List all patients |
+| GET | `/pacientes/{id}` | Get patient by ID |
+| POST | `/pacientes` | Create new patient |
+| PUT | `/pacientes/{id}` | Update patient |
+| DELETE | `/pacientes/{id}` | Soft delete patient |
+| DELETE | `/pacientes/{id}/force` | Permanently delete patient |
+| GET | `/pacientes/{id}/citas` | Get patient appointments |
+| POST | `/pacientes/agendar-cita` | Schedule appointment |
+| PATCH | `/pacientes/{pacienteId}/citas/{citaId}/estado` | Change appointment status |
+| GET | `/pacientes/{id}/historial-medico` | Get medical history |

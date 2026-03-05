@@ -1,0 +1,448 @@
+---
+title: 'Database Configuration'
+description: 'Configure MySQL databases for NOVA.ing microservices'
+---
+
+## Overview
+
+NOVA.ing Atención Médica uses MySQL as the primary database for storing medical data across four microservices. Each microservice has its own dedicated database following microservices best practices.
+
+## Database Architecture
+
+Each microservice requires its own MySQL database:
+
+| Microservice | Port | Database Name | Purpose |
+|-------------|------|---------------|----------|
+| msvc-medico | 8080 | `db_medico` | Doctor management |
+| msvc-cita | 8081 | `db_cita` | Appointment scheduling |
+| msvc-diagnostico | 8082 | `db_diagnostico` | Medical diagnoses |
+| msvc-paciente | 8083 | `db_paciente` | Patient records |
+
+<Note>
+The **msvc-web-semantica** service uses Apache Jena Fuseki (a triplestore) instead of MySQL for semantic web data.
+</Note>
+
+## Prerequisites
+
+- MySQL 8.0 or higher installed and running
+- MySQL root access or a user with database creation privileges
+- MySQL client or workbench for database administration
+
+## Database Setup
+
+### Step 1: Create Databases
+
+Connect to MySQL and create the required databases:
+
+```sql
+-- Connect to MySQL
+mysql -u root -p
+
+-- Create databases for each microservice
+CREATE DATABASE IF NOT EXISTS db_medico CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS db_cita CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS db_diagnostico CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS db_paciente CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### Step 2: Create Database User
+
+<Warning>
+For production environments, create a dedicated user with limited privileges instead of using root.
+</Warning>
+
+Create a dedicated user for the application:
+
+```sql
+-- Create application user
+CREATE USER 'nova_user'@'localhost' IDENTIFIED BY 'secure_password_here';
+
+-- Grant privileges on all NOVA databases
+GRANT ALL PRIVILEGES ON db_medico.* TO 'nova_user'@'localhost';
+GRANT ALL PRIVILEGES ON db_cita.* TO 'nova_user'@'localhost';
+GRANT ALL PRIVILEGES ON db_diagnostico.* TO 'nova_user'@'localhost';
+GRANT ALL PRIVILEGES ON db_paciente.* TO 'nova_user'@'localhost';
+
+-- Apply changes
+FLUSH PRIVILEGES;
+```
+
+### Step 3: Verify Database Creation
+
+Confirm that all databases were created successfully:
+
+```sql
+SHOW DATABASES LIKE 'db_%';
+```
+
+Expected output:
+```
++------------------+
+| Database         |
++------------------+
+| db_cita          |
+| db_diagnostico   |
+| db_medico        |
+| db_paciente      |
++------------------+
+```
+
+## Spring Boot Configuration
+
+Each microservice needs to be configured with database connection details. Spring Boot uses JPA/Hibernate to automatically create tables based on entity definitions.
+
+### Configuration File Location
+
+For each microservice, create or update the `application.properties` file:
+
+```
+msvc-medico/src/main/resources/application.properties
+msvc-cita/src/main/resources/application.properties
+msvc-diagnostico/src/main/resources/application.properties
+msvc-paciente/src/main/resources/application.properties
+```
+
+### Database Configuration Template
+
+<CodeGroup>
+```properties msvc-medico
+# Server Configuration
+server.port=8080
+spring.application.name=msvc-medico
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/db_medico?useSSL=false&serverTimezone=UTC
+spring.datasource.username=nova_user
+spring.datasource.password=secure_password_here
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+```properties msvc-cita
+# Server Configuration
+server.port=8081
+spring.application.name=msvc-cita
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/db_cita?useSSL=false&serverTimezone=UTC
+spring.datasource.username=nova_user
+spring.datasource.password=secure_password_here
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+```properties msvc-diagnostico
+# Server Configuration
+server.port=8082
+spring.application.name=msvc-diagnostico
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/db_diagnostico?useSSL=false&serverTimezone=UTC
+spring.datasource.username=nova_user
+spring.datasource.password=secure_password_here
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+```properties msvc-paciente
+# Server Configuration
+server.port=8083
+spring.application.name=msvc-paciente
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/db_paciente?useSSL=false&serverTimezone=UTC
+spring.datasource.username=nova_user
+spring.datasource.password=secure_password_here
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+</CodeGroup>
+
+### Configuration Properties Explained
+
+| Property | Description |
+|----------|-------------|
+| `spring.datasource.url` | JDBC connection URL with database name |
+| `spring.datasource.username` | Database user |
+| `spring.datasource.password` | Database password |
+| `spring.jpa.hibernate.ddl-auto` | Schema generation strategy |
+| `spring.jpa.show-sql` | Print SQL statements to console |
+
+### DDL Auto Options
+
+The `spring.jpa.hibernate.ddl-auto` property controls schema generation:
+
+- **`update`** (recommended for development) - Updates schema without data loss
+- **`create`** - Drops and recreates schema on startup (data loss)
+- **`create-drop`** - Creates schema on startup, drops on shutdown
+- **`validate`** - Validates schema matches entities (no changes)
+- **`none`** - No schema operations
+
+<Warning>
+For production environments, use `validate` or `none` and manage schema migrations with tools like Flyway or Liquibase.
+</Warning>
+
+## Environment Variables
+
+For better security, use environment variables instead of hardcoding credentials:
+
+```properties
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/db_medico}
+spring.datasource.username=${DB_USERNAME:nova_user}
+spring.datasource.password=${DB_PASSWORD}
+```
+
+Set environment variables before starting the service:
+
+<CodeGroup>
+```bash Linux/Mac
+export DB_URL="jdbc:mysql://localhost:3306/db_medico"
+export DB_USERNAME="nova_user"
+export DB_PASSWORD="your_password"
+```
+
+```powershell Windows (PowerShell)
+$env:DB_URL="jdbc:mysql://localhost:3306/db_medico"
+$env:DB_USERNAME="nova_user"
+$env:DB_PASSWORD="your_password"
+```
+
+```cmd Windows (CMD)
+set DB_URL=jdbc:mysql://localhost:3306/db_medico
+set DB_USERNAME=nova_user
+set DB_PASSWORD=your_password
+```
+</CodeGroup>
+
+## Testing Database Connection
+
+After configuration, test the database connection:
+
+<Steps>
+  <Step title="Start MySQL Server">
+    Ensure MySQL is running:
+    ```bash
+    sudo systemctl status mysql  # Linux
+    # or check Windows Services for MySQL
+    ```
+  </Step>
+
+  <Step title="Start a Microservice">
+    Start one microservice to test:
+    ```bash
+    cd msvc-medico
+    mvn spring-boot:run
+    ```
+  </Step>
+
+  <Step title="Check Logs">
+    Look for successful connection messages in the console:
+    ```
+    HikariPool-1 - Starting...
+    HikariPool-1 - Start completed.
+    Initialized JPA EntityManagerFactory
+    ```
+  </Step>
+
+  <Step title="Verify Tables Created">
+    Check that Hibernate created tables:
+    ```sql
+    USE db_medico;
+    SHOW TABLES;
+    ```
+  </Step>
+</Steps>
+
+## Apache Jena Fuseki Configuration
+
+The **msvc-web-semantica** service uses Apache Jena Fuseki for semantic web functionality.
+
+### Fuseki Setup Steps
+
+<Steps>
+  <Step title="Download Fuseki">
+    Fuseki should be available in the project:
+    ```
+    msvc-web-semantica/target/apache-jena-fuseki-6.0.0/
+    ```
+  </Step>
+
+  <Step title="Start Fuseki Server">
+    ```bash
+    cd msvc-web-semantica/target/apache-jena-fuseki-6.0.0
+    java -jar fuseki-server.jar
+    ```
+    Server starts on `http://localhost:3030`
+  </Step>
+
+  <Step title="Create Dataset">
+    1. Open `http://localhost:3030` in browser
+    2. Click **"New dataset"**
+    3. Set **Dataset name**: `atencion_medica`
+    4. Select **Persistent (TDB2)** for data persistence
+    5. Click **Create dataset**
+  </Step>
+
+  <Step title="Upload Ontology">
+    1. Navigate to dataset: `atencion_medica`
+    2. Click **"add data"** or **"upload data"**
+    3. Select file: `msvc-web-semantica/src/main/resources/ontology/atencion-medica.ttl`
+    4. Click **"upload now"**
+  </Step>
+</Steps>
+
+### Fuseki Configuration in Spring Boot
+
+Create `application.properties` for msvc-web-semantica:
+
+```properties msvc-web-semantica/src/main/resources/application.properties
+# Server Configuration
+server.port=8084
+spring.application.name=msvc-web-semantica
+
+# Fuseki Configuration
+fuseki.url=http://localhost:3030
+fuseki.dataset=atencion_medica
+
+# Logging
+logging.level.org.apache.jena=INFO
+```
+
+## Troubleshooting
+
+### Connection Refused
+
+**Problem**: `Connection refused` error when starting microservice
+
+**Solution**:
+1. Verify MySQL is running: `sudo systemctl status mysql`
+2. Check MySQL is listening on port 3306: `netstat -tlnp | grep 3306`
+3. Verify firewall allows connections to port 3306
+
+### Authentication Failed
+
+**Problem**: `Access denied for user` error
+
+**Solution**:
+1. Verify username and password in `application.properties`
+2. Check user exists: `SELECT User, Host FROM mysql.user;`
+3. Verify user has privileges: `SHOW GRANTS FOR 'nova_user'@'localhost';`
+
+### Unknown Database
+
+**Problem**: `Unknown database 'db_medico'` error
+
+**Solution**:
+1. Verify database exists: `SHOW DATABASES LIKE 'db_%';`
+2. Create missing database: `CREATE DATABASE db_medico;`
+
+### Table Already Exists
+
+**Problem**: Hibernate throws "Table already exists" error
+
+**Solution**:
+Change `spring.jpa.hibernate.ddl-auto` from `create` to `update`:
+```properties
+spring.jpa.hibernate.ddl-auto=update
+```
+
+### Fuseki Dataset Not Found
+
+**Problem**: msvc-web-semantica cannot connect to Fuseki dataset
+
+**Solution**:
+1. Verify Fuseki is running: `curl http://localhost:3030/$/ping`
+2. Check dataset exists: Open `http://localhost:3030` and verify `atencion_medica` is listed
+3. Recreate dataset if necessary
+
+## Production Considerations
+
+<Warning>
+These configuration recommendations are critical for production deployments.
+</Warning>
+
+### Security Best Practices
+
+1. **Use strong passwords** for database users
+2. **Store credentials in environment variables** or secret management systems
+3. **Use SSL/TLS** for database connections:
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/db_medico?useSSL=true&requireSSL=true
+   ```
+4. **Limit database user privileges** to only what's needed
+5. **Use connection pooling** (HikariCP is default in Spring Boot)
+
+### Performance Optimization
+
+```properties
+# Connection Pool Configuration
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+
+# JPA Performance
+spring.jpa.properties.hibernate.jdbc.batch_size=20
+spring.jpa.properties.hibernate.order_inserts=true
+spring.jpa.properties.hibernate.order_updates=true
+```
+
+### Backup Strategy
+
+Implement regular database backups:
+
+```bash
+# Backup all NOVA databases
+mysqldump -u root -p --databases db_medico db_cita db_diagnostico db_paciente > nova_backup_$(date +%Y%m%d).sql
+
+# Restore from backup
+mysql -u root -p < nova_backup_20260305.sql
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Initial Setup" icon="rocket" href="/deployment/setup">
+    Return to complete setup guide
+  </Card>
+  <Card title="Frontend Deployment" icon="window" href="/deployment/frontend">
+    Configure and deploy the React frontend
+  </Card>
+</CardGroup>

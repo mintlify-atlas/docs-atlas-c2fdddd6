@@ -1,0 +1,658 @@
+---
+title: 'Doctor Service Endpoints'
+description: 'Complete API reference for all Doctor Service endpoints'
+---
+
+## Endpoints Overview
+
+The Doctor Service provides 9 REST endpoints for comprehensive doctor management.
+
+## List All Doctors
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8080/medicos
+```
+</CodeGroup>
+
+Retrieves a list of all registered doctors in the system.
+
+### Response
+
+<ResponseField name="Array" type="MedicoEntity[]">
+  Array of doctor objects
+  <Expandable title="Doctor object properties">
+    <ResponseField name="id" type="Long">
+      Doctor's unique identifier
+    </ResponseField>
+    <ResponseField name="nombres" type="string">
+      First name(s)
+    </ResponseField>
+    <ResponseField name="apellidos" type="string">
+      Last name(s)
+    </ResponseField>
+    <ResponseField name="especialidad" type="enum">
+      Medical specialty (CARDIOLOGIA, PEDIATRIA, DERMATOLOGIA, GINECOLOGIA, MEDICINA_GENERAL)
+    </ResponseField>
+    <ResponseField name="telefono" type="string">
+      Phone number
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      Email address
+    </ResponseField>
+    <ResponseField name="dni" type="string">
+      National ID
+    </ResponseField>
+    <ResponseField name="estado" type="enum">
+      Status (ACTIVO, INACTIVO)
+    </ResponseField>
+    <ResponseField name="horarios" type="array">
+      Working schedules
+    </ResponseField>
+    <ResponseField name="usuarioId" type="Long">
+      Associated user ID
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "nombres": "Juan Carlos",
+    "apellidos": "García López",
+    "especialidad": "CARDIOLOGIA",
+    "telefono": "987654321",
+    "email": "jgarcia@hospital.com",
+    "dni": "12345678",
+    "estado": "ACTIVO",
+    "horarios": [
+      {
+        "id": 1,
+        "diaSemana": "MONDAY",
+        "horaInicio": "08:00:00",
+        "horaFin": "12:00:00"
+      }
+    ],
+    "usuarioId": 10
+  }
+]
+```
+
+---
+
+## Get Doctor Details
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8080/medicos/{id}
+```
+</CodeGroup>
+
+Retrieves detailed information about a specific doctor by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the doctor
+</ParamField>
+
+### Response
+
+<ResponseField name="MedicoEntity" type="object">
+  Complete doctor object with all properties (see List All Doctors response)
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="200 OK" type="status">
+  Doctor found and returned successfully
+</ResponseField>
+
+<ResponseField name="404 Not Found" type="status">
+  Doctor with specified ID does not exist
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "nombres": "Juan Carlos",
+  "apellidos": "García López",
+  "especialidad": "CARDIOLOGIA",
+  "telefono": "987654321",
+  "email": "jgarcia@hospital.com",
+  "dni": "12345678",
+  "estado": "ACTIVO",
+  "horarios": [],
+  "usuarioId": 10
+}
+```
+
+---
+
+## Get Doctor Appointments
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8080/medicos/{id}/citas
+```
+</CodeGroup>
+
+Retrieves all appointments for a specific doctor.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the doctor
+</ParamField>
+
+### Response
+
+<ResponseField name="Array" type="Cita[]">
+  Array of appointment objects
+  <Expandable title="Appointment (Cita) properties">
+    <ResponseField name="id" type="Long">
+      Appointment ID
+    </ResponseField>
+    <ResponseField name="fechaCita" type="Date">
+      Appointment date
+    </ResponseField>
+    <ResponseField name="horaInicio" type="string">
+      Start time
+    </ResponseField>
+    <ResponseField name="horaFin" type="string">
+      End time
+    </ResponseField>
+    <ResponseField name="motivo" type="string">
+      Reason for appointment
+    </ResponseField>
+    <ResponseField name="estado" type="string">
+      Appointment status
+    </ResponseField>
+    <ResponseField name="pacienteId" type="Long">
+      Patient ID
+    </ResponseField>
+    <ResponseField name="medicoId" type="Long">
+      Doctor ID
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="200 OK" type="status">
+  Appointments retrieved successfully
+</ResponseField>
+
+<ResponseField name="404 Not Found" type="status">
+  Doctor with specified ID does not exist
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": 101,
+    "fechaCita": "2026-03-15T00:00:00.000+00:00",
+    "horaInicio": "09:00",
+    "horaFin": "10:00",
+    "motivo": "Consulta de control cardiológico",
+    "estado": "PROGRAMADA",
+    "pacienteId": 50,
+    "medicoId": 1
+  }
+]
+```
+
+---
+
+## Create Doctor
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8080/medicos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "medico": {
+      "nombres": "María Elena",
+      "apellidos": "Rodríguez Pérez",
+      "especialidad": "PEDIATRIA",
+      "telefono": "987654322",
+      "email": "mrodriguez@hospital.com",
+      "dni": "23456789",
+      "estado": "ACTIVO"
+    }
+  }'
+```
+</CodeGroup>
+
+Creates a new doctor in the system.
+
+### Request Body
+
+<ParamField body="medico" type="object" required>
+  Doctor information wrapper
+  <Expandable title="MedicoEntity properties">
+    <ParamField body="nombres" type="string" required>
+      Doctor's first name(s) - cannot be blank
+    </ParamField>
+    <ParamField body="apellidos" type="string" required>
+      Doctor's last name(s) - cannot be blank
+    </ParamField>
+    <ParamField body="especialidad" type="enum" required>
+      Medical specialty: CARDIOLOGIA, PEDIATRIA, DERMATOLOGIA, GINECOLOGIA, or MEDICINA_GENERAL
+    </ParamField>
+    <ParamField body="telefono" type="string" required>
+      Phone number (format: 9XXXXXXXX) - must be unique
+    </ParamField>
+    <ParamField body="email" type="string" required>
+      Email address - must be unique
+    </ParamField>
+    <ParamField body="dni" type="string" required>
+      National ID (8 digits, cannot start with 0) - must be unique
+    </ParamField>
+    <ParamField body="estado" type="enum" required>
+      Status: ACTIVO or INACTIVO
+    </ParamField>
+    <ParamField body="horarios" type="array">
+      Optional working schedule entries
+    </ParamField>
+    <ParamField body="usuarioId" type="Long">
+      Optional associated user account ID
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="MedicoEntity" type="object">
+  The created doctor object with generated ID
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="201 Created" type="status">
+  Doctor created successfully
+</ResponseField>
+
+<ResponseField name="400 Bad Request" type="status">
+  Validation errors (see error response format below)
+</ResponseField>
+
+### Validation Error Response
+
+```json
+{
+  "nombres": "El campo nombres no debe estar vacío",
+  "telefono": "El campo telefono debe cumplir el patrón ^9[0-9]{8}$"
+}
+```
+
+### Example Response
+
+```json
+{
+  "id": 2,
+  "nombres": "María Elena",
+  "apellidos": "Rodríguez Pérez",
+  "especialidad": "PEDIATRIA",
+  "telefono": "987654322",
+  "email": "mrodriguez@hospital.com",
+  "dni": "23456789",
+  "estado": "ACTIVO",
+  "horarios": [],
+  "usuarioId": null
+}
+```
+
+---
+
+## Update Doctor
+
+<CodeGroup>
+```bash cURL
+curl -X PUT http://localhost:8080/medicos/{id} \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombres": "María Elena",
+    "apellidos": "Rodríguez Pérez",
+    "especialidad": "PEDIATRIA",
+    "telefono": "987654322",
+    "email": "mrodriguez@hospital.com",
+    "dni": "23456789",
+    "estado": "INACTIVO"
+  }'
+```
+</CodeGroup>
+
+Updates an existing doctor's information.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the doctor to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="nombres" type="string" required>
+  Updated first name(s)
+</ParamField>
+
+<ParamField body="apellidos" type="string" required>
+  Updated last name(s)
+</ParamField>
+
+<ParamField body="especialidad" type="enum" required>
+  Updated specialty
+</ParamField>
+
+<ParamField body="telefono" type="string" required>
+  Updated phone number
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Updated email
+</ParamField>
+
+<ParamField body="dni" type="string" required>
+  Updated DNI
+</ParamField>
+
+<ParamField body="estado" type="enum" required>
+  Updated status
+</ParamField>
+
+<Note>
+  The request body is a direct MedicoEntity object, not wrapped in a "medico" property like the create endpoint.
+</Note>
+
+### Response
+
+<ResponseField name="MedicoEntity" type="object">
+  The updated doctor object
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="201 Created" type="status">
+  Doctor updated successfully (note: returns 201 instead of 200)
+</ResponseField>
+
+<ResponseField name="400 Bad Request" type="status">
+  Validation errors
+</ResponseField>
+
+<ResponseField name="404 Not Found" type="status">
+  Doctor with specified ID does not exist
+</ResponseField>
+
+---
+
+## Delete Doctor (Soft Delete)
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE http://localhost:8080/medicos/{id}
+```
+</CodeGroup>
+
+Performs a soft delete (logical deletion) of a doctor. The doctor record is marked as inactive but not permanently removed.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the doctor to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="No Content" type="void">
+  Empty response body
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="204 No Content" type="status">
+  Doctor deleted successfully
+</ResponseField>
+
+<ResponseField name="404 Not Found" type="status">
+  Doctor with specified ID does not exist
+</ResponseField>
+
+---
+
+## Delete Doctor Permanently
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE http://localhost:8080/medicos/{id}/force
+```
+</CodeGroup>
+
+Permanently removes a doctor record from the database. This operation is irreversible.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the doctor to permanently delete
+</ParamField>
+
+### Response
+
+<ResponseField name="No Content" type="void">
+  Empty response body
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="204 No Content" type="status">
+  Doctor permanently deleted
+</ResponseField>
+
+<ResponseField name="404 Not Found" type="status">
+  Doctor with specified ID does not exist
+</ResponseField>
+
+<Warning>
+  This operation cannot be undone. Use with caution.
+</Warning>
+
+---
+
+## Schedule Appointment
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8080/medicos/agendar-cita \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fechaCita": "2026-03-20T00:00:00.000Z",
+    "horaInicio": "10:00",
+    "horaFin": "11:00",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "pacienteId": 25,
+    "medicoId": 1
+  }'
+```
+</CodeGroup>
+
+Schedules a new appointment for a doctor and patient.
+
+### Request Body
+
+<ParamField body="fechaCita" type="Date" required>
+  Date of the appointment (ISO 8601 format)
+</ParamField>
+
+<ParamField body="horaInicio" type="string" required>
+  Start time (format: HH:mm)
+</ParamField>
+
+<ParamField body="horaFin" type="string" required>
+  End time (format: HH:mm)
+</ParamField>
+
+<ParamField body="motivo" type="string" required>
+  Reason for the appointment
+</ParamField>
+
+<ParamField body="estado" type="string" required>
+  Appointment status (e.g., PROGRAMADA, CONFIRMADA, CANCELADA)
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  ID of the patient
+</ParamField>
+
+<ParamField body="medicoId" type="Long" required>
+  ID of the doctor
+</ParamField>
+
+### Response
+
+<ResponseField name="Cita" type="object">
+  The created appointment object with generated ID
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="201 Created" type="status">
+  Appointment scheduled successfully
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": 102,
+  "fechaCita": "2026-03-20T00:00:00.000+00:00",
+  "horaInicio": "10:00",
+  "horaFin": "11:00",
+  "motivo": "Consulta general",
+  "estado": "PROGRAMADA",
+  "pacienteId": 25,
+  "medicoId": 1
+}
+```
+
+---
+
+## Register Diagnostic
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8080/medicos/registrar-diagnostico \
+  -H "Content-Type: application/json" \
+  -d '{
+    "descripcion": "Hipertensión arterial leve",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2026-03-05T00:00:00.000Z",
+    "citaId": 101,
+    "pacienteId": 50,
+    "activo": true
+  }'
+```
+</CodeGroup>
+
+Registers a new diagnostic record for a patient consultation.
+
+### Request Body
+
+<ParamField body="descripcion" type="string" required>
+  Description of the diagnosis
+</ParamField>
+
+<ParamField body="tipoDiagnostico" type="string" required>
+  Type of diagnosis (e.g., DEFINITIVO, PROVISIONAL, DIFERENCIAL)
+</ParamField>
+
+<ParamField body="fechaDiagnostico" type="Date" required>
+  Date of diagnosis (ISO 8601 format)
+</ParamField>
+
+<ParamField body="citaId" type="Long" required>
+  ID of the related appointment
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  ID of the patient
+</ParamField>
+
+<ParamField body="activo" type="boolean" required>
+  Whether the diagnostic is currently active
+</ParamField>
+
+### Response
+
+<ResponseField name="Diagnostico" type="object">
+  The created diagnostic object with generated ID
+</ResponseField>
+
+### Status Codes
+
+<ResponseField name="201 Created" type="status">
+  Diagnostic registered successfully
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": 201,
+  "descripcion": "Hipertensión arterial leve",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2026-03-05T00:00:00.000+00:00",
+  "citaId": 101,
+  "pacienteId": 50,
+  "activo": true
+}
+```
+
+---
+
+## Endpoint Summary Table
+
+| Method | Endpoint | Description | Authentication |
+|--------|----------|-------------|----------------|
+| GET | `/medicos` | List all doctors | TBD |
+| GET | `/medicos/{id}` | Get doctor details | TBD |
+| GET | `/medicos/{id}/citas` | Get doctor's appointments | TBD |
+| POST | `/medicos` | Create new doctor | TBD |
+| PUT | `/medicos/{id}` | Update doctor | TBD |
+| DELETE | `/medicos/{id}` | Soft delete doctor | TBD |
+| DELETE | `/medicos/{id}/force` | Permanently delete doctor | TBD |
+| POST | `/medicos/agendar-cita` | Schedule appointment | TBD |
+| POST | `/medicos/registrar-diagnostico` | Register diagnostic | TBD |
+
+## Common Error Responses
+
+### Validation Error (400 Bad Request)
+
+```json
+{
+  "fieldName": "El campo fieldName [error message]"
+}
+```
+
+### Not Found (404)
+
+Empty response body when resource is not found.
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Doctor Service Overview" icon="book" href="/api/medico/overview">
+    Learn about data models and validation rules
+  </Card>
+  <Card title="Patient Service" icon="user" href="/api/paciente/endpoints">
+    Patient management endpoints
+  </Card>
+</CardGroup>

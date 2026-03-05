@@ -1,80 +1,308 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: 'Quickstart'
+description: 'Get NOVA.ing Atención Médica running locally in minutes'
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Before you begin, ensure you have the following installed:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Java 25" icon="coffee">
+    Required for running the Spring Boot microservices
+  </Card>
+  <Card title="Maven" icon="box">
+    Build tool for the Java microservices
+  </Card>
+  <Card title="Node.js 18+" icon="node-js">
+    Required for the React frontend
+  </Card>
+  <Card title="PostgreSQL/MySQL" icon="database">
+    Databases for the microservices (or use H2 for testing)
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+<Warning>
+  This system does not implement authentication or authorization. All endpoints are open for academic purposes to focus on microservices integration and Semantic Web.
+</Warning>
+
+## Installation
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the NOVA.ing Atención Médica repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/your-org/NOVA_ing-AtencionMedica.git
+    cd NOVA_ing-AtencionMedica
+    ```
+  </Step>
+
+  <Step title="Build All Microservices">
+    Build the parent project to compile all microservices:
+    
+    ```bash
+    mvn clean install
+    ```
+    
+    This compiles the 5 microservices:
+    - `msvc-paciente` (Patient Management)
+    - `msvc-medico` (Doctor Management)
+    - `msvc-cita` (Appointment Management)
+    - `msvc-diagnostico` (Diagnosis Management)
+    - `msvc-web-semantica` (Semantic Web Layer)
+  </Step>
+
+  <Step title="Configure Databases">
+    Each microservice requires its own database. Create the following databases:
+    
+    <CodeGroup>
+    ```sql PostgreSQL
+    CREATE DATABASE db_pacientes;
+    CREATE DATABASE db_medicos;
+    CREATE DATABASE db_citas;
+    CREATE DATABASE db_diagnosticos;
+    ```
+    
+    ```sql MySQL
+    CREATE DATABASE db_pacientes;
+    CREATE DATABASE db_medicos;
+    CREATE DATABASE db_citas;
+    CREATE DATABASE db_diagnosticos;
+    ```
+    </CodeGroup>
+    
+    <Note>
+      For development, you can use H2 in-memory database by adding the H2 dependency and configuring `application.properties` in each microservice.
+    </Note>
+  </Step>
+
+  <Step title="Start Microservices">
+    Open 5 separate terminal windows and start each microservice:
+    
+    <Tabs>
+      <Tab title="msvc-medico">
+        ```bash
+        cd msvc-medico
+        ./mvnw spring-boot:run
+        ```
+        Runs on: `http://localhost:8080`
+      </Tab>
+      
+      <Tab title="msvc-cita">
+        ```bash
+        cd msvc-cita
+        ./mvnw spring-boot:run
+        ```
+        Runs on: `http://localhost:8081`
+      </Tab>
+      
+      <Tab title="msvc-diagnostico">
+        ```bash
+        cd msvc-diagnostico
+        ./mvnw spring-boot:run
+        ```
+        Runs on: `http://localhost:8082`
+      </Tab>
+      
+      <Tab title="msvc-paciente">
+        ```bash
+        cd msvc-paciente
+        ./mvnw spring-boot:run
+        ```
+        Runs on: `http://localhost:8083`
+      </Tab>
+      
+      <Tab title="msvc-web-semantica">
+        ```bash
+        cd msvc-web-semantica
+        ./mvnw spring-boot:run
+        ```
+        Runs on: `http://localhost:8084`
+      </Tab>
+    </Tabs>
+    
+    <Note>
+      Wait for each service to fully start before proceeding. You should see "Started Msvc...Application" in each terminal.
+    </Note>
+  </Step>
+
+  <Step title="Setup Apache Jena Fuseki (Semantic Web)">
+    The Semantic Web service requires Apache Jena Fuseki for RDF/SPARQL queries:
+    
+    ```bash
+    cd msvc-web-semantica/target/apache-jena-fuseki-6.0.0
+    java -jar fuseki-server.jar
+    ```
+    
+    Then open `http://localhost:3030/` in your browser and:
+    
+    1. Click **"New dataset"**
+    2. Set **Dataset name**: `atencion_medica`
+    3. Select **Dataset type**: `Persistent (TDB2) – dataset will persist across Fuseki restarts`
+    4. Click **Create dataset**
+    5. In the Actions column, select **"upload data"**
+    6. Upload the file: `msvc-web-semantica/src/main/resources/ontology/atencion-medica.ttl`
+    7. Click **"upload now"**
+  </Step>
+
+  <Step title="Install Frontend Dependencies">
+    Navigate to the frontend directory and install dependencies:
+    
+    ```bash
+    cd nova-frontend
+    npm install
+    ```
+  </Step>
+
+  <Step title="Build and Run Frontend">
+    Build and start the React frontend:
+    
+    ```bash
+    npm run build
+    npm run dev
+    ```
+    
+    <Warning>
+      If you encounter errors, always run `npm run build` first, then `npm run dev`.
+    </Warning>
+    
+    The frontend will start on `http://localhost:5173` (default Vite port).
+  </Step>
+</Steps>
+
+## Verify Installation
+
+Once all services are running, verify the installation:
+
+<AccordionGroup>
+  <Accordion title="Check Microservices Health">
+    Verify each microservice is running:
+    
+    ```bash
+    # Médicos (Doctors)
+    curl http://localhost:8080/medicos
+    
+    # Citas (Appointments)
+    curl http://localhost:8081/citas
+    
+    # Diagnósticos (Diagnoses)
+    curl http://localhost:8082/diagnosticos
+    
+    # Pacientes (Patients)
+    curl http://localhost:8083/pacientes
+    
+    # Semantic Web
+    curl http://localhost:8084/api/v1/semantic/health
+    ```
+  </Accordion>
+  
+  <Accordion title="Access Frontend">
+    Open your browser and navigate to:
+    
+    ```
+    http://localhost:5173
+    ```
+    
+    You should see the NOVA.ing Atención Médica dashboard with:
+    - Patient management
+    - Doctor management
+    - Appointment scheduling
+    - Diagnosis records
+    - Semantic chat interface
+  </Accordion>
+  
+  <Accordion title="Test Semantic Queries">
+    Access the Fuseki SPARQL endpoint:
+    
+    ```
+    http://localhost:3030/atencion_medica/sparql
+    ```
+    
+    Try a sample SPARQL query:
+    
+    ```sparql
+    PREFIX am: <http://www.atencionmedica.org/ontology#>
+    
+    SELECT ?paciente ?nombre WHERE {
+      ?paciente a am:Paciente .
+      ?paciente am:nombre ?nombre .
+    }
+    LIMIT 10
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Port Reference
+
+All services run on localhost with the following ports:
+
+| Service | Port | Endpoint |
+|---------|------|----------|
+| msvc-medico | 8080 | http://localhost:8080 |
+| msvc-cita | 8081 | http://localhost:8081 |
+| msvc-diagnostico | 8082 | http://localhost:8082 |
+| msvc-paciente | 8083 | http://localhost:8083 |
+| msvc-web-semantica | 8084 | http://localhost:8084 |
+| Apache Jena Fuseki | 3030 | http://localhost:3030 |
+| Frontend (Vite) | 5173 | http://localhost:5173 |
+
+## Sample Data
+
+The microservices automatically seed sample data on first run:
+
+- **50 Patients** with realistic data (names, DNI, addresses, medical history)
+- **Multiple Doctors** across different specialties
+- **Sample Appointments** linking patients and doctors
+- **Diagnosis Records** associated with appointments
+
+<Tip>
+  Check the `CommandLineRunner` beans in each microservice's main application class to see how sample data is generated (e.g., `/home/daytona/workspace/source/msvc-paciente/src/main/java/org/nova/ing/springcloud/atencion/medica/msvc/paciente/MsvcPacienteApplication.java:28`).
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture Overview" icon="diagram-project" href="/architecture">
+    Learn about the microservices architecture and communication patterns
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/paciente/overview">
+    Explore the REST API endpoints for each microservice
+  </Card>
+  <Card title="Semantic Web" icon="brain" href="/concepts/semantic-web">
+    Understand the RDF/OWL ontologies and SPARQL queries
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/deployment/setup">
+    Deploy NOVA.ing to production
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port Already in Use">
+    If a port is already in use, you can change it in each microservice's `application.properties`:
+    
+    ```properties
+    server.port=8085
+    ```
+  </Accordion>
+  
+  <Accordion title="Database Connection Errors">
+    Ensure your database is running and credentials are correct. Check `application.properties` in each microservice:
+    
+    ```properties
+    spring.datasource.url=jdbc:postgresql://localhost:5432/db_pacientes
+    spring.datasource.username=your_username
+    spring.datasource.password=your_password
+    ```
+  </Accordion>
+  
+  <Accordion title="Frontend Proxy Errors">
+    The frontend uses Vite proxy to communicate with microservices. Ensure all backend services are running before starting the frontend. Check `nova-frontend/vite.config.ts:30` for proxy configuration.
+  </Accordion>
+  
+  <Accordion title="Feign Client Errors">
+    If you see Feign client connection errors, verify that all dependent microservices are running. For example, `msvc-cita` requires `msvc-paciente`, `msvc-medico`, and `msvc-diagnostico` to be running.
+  </Accordion>
+</AccordionGroup>

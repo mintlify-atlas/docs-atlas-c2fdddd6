@@ -1,0 +1,175 @@
+---
+title: 'Doctor Service Overview'
+description: 'Comprehensive API for managing doctors in the NOVA.ing medical care system'
+---
+
+## Introduction
+
+The Doctor Service (msvc-medico) is a microservice that manages all doctor-related operations in the NOVA.ing Atención Médica platform. It provides endpoints for doctor registration, profile management, appointment scheduling, and diagnostic record creation.
+
+## Base URL
+
+```
+http://localhost:8080/medicos
+```
+
+## Service Information
+
+<ResponseField name="Service Name" type="string">
+  msvc-medico
+</ResponseField>
+
+<ResponseField name="Version" type="string">
+  0.0.1-SNAPSHOT
+</ResponseField>
+
+<ResponseField name="Description" type="string">
+  Microservice that manages doctors within medical care
+</ResponseField>
+
+## Key Features
+
+- **Doctor Management**: Create, read, update, and delete doctor profiles
+- **Appointment Access**: Retrieve all appointments for a specific doctor
+- **Appointment Scheduling**: Schedule new appointments via doctor service
+- **Diagnostic Recording**: Register diagnostic records for patient consultations
+- **Soft Delete Support**: Logical deletion with permanent delete option
+- **Schedule Management**: Manage doctor availability schedules by day of week
+
+## Doctor Specialties
+
+The service supports the following medical specialties:
+
+<ResponseField name="CARDIOLOGIA" type="enum">
+  Cardiology - Heart and cardiovascular system specialists
+</ResponseField>
+
+<ResponseField name="PEDIATRIA" type="enum">
+  Pediatrics - Child healthcare specialists
+</ResponseField>
+
+<ResponseField name="DERMATOLOGIA" type="enum">
+  Dermatology - Skin, hair, and nail specialists
+</ResponseField>
+
+<ResponseField name="GINECOLOGIA" type="enum">
+  Gynecology - Women's reproductive health specialists
+</ResponseField>
+
+<ResponseField name="MEDICINA_GENERAL" type="enum">
+  General Medicine - Primary care physicians
+</ResponseField>
+
+## Doctor Status
+
+<ResponseField name="ACTIVO" type="enum">
+  Active - Doctor is currently practicing and available for appointments
+</ResponseField>
+
+<ResponseField name="INACTIVO" type="enum">
+  Inactive - Doctor is not currently accepting appointments
+</ResponseField>
+
+## Data Model
+
+### Doctor Entity
+
+The core doctor entity contains:
+
+<ResponseField name="id" type="Long">
+  Unique identifier (auto-generated)
+</ResponseField>
+
+<ResponseField name="nombres" type="string" required>
+  Doctor's first name(s)
+</ResponseField>
+
+<ResponseField name="apellidos" type="string" required>
+  Doctor's last name(s)
+</ResponseField>
+
+<ResponseField name="especialidad" type="enum" required>
+  Medical specialty (see Doctor Specialties above)
+</ResponseField>
+
+<ResponseField name="telefono" type="string" required>
+  Phone number (format: 9XXXXXXXX - must start with 9 and have 9 digits)
+</ResponseField>
+
+<ResponseField name="email" type="string" required>
+  Email address (unique)
+</ResponseField>
+
+<ResponseField name="dni" type="string" required>
+  National ID number (format: 8 digits, cannot start with 0)
+</ResponseField>
+
+<ResponseField name="estado" type="enum" required>
+  Current status (ACTIVO or INACTIVO)
+</ResponseField>
+
+<ResponseField name="horarios" type="array">
+  List of doctor's working schedules
+  <Expandable title="HorarioMedico properties">
+    <ResponseField name="id" type="Long">
+      Schedule entry ID
+    </ResponseField>
+    <ResponseField name="diaSemana" type="enum">
+      Day of week (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
+    </ResponseField>
+    <ResponseField name="horaInicio" type="LocalTime">
+      Start time (format: HH:mm:ss)
+    </ResponseField>
+    <ResponseField name="horaFin" type="LocalTime">
+      End time (format: HH:mm:ss)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usuarioId" type="Long">
+  Associated user account ID (for authentication)
+</ResponseField>
+
+## Validation Rules
+
+### Phone Number
+- Must start with 9
+- Must be exactly 9 digits
+- Pattern: `^9[0-9]{8}$`
+
+### DNI (National ID)
+- Must be exactly 8 digits
+- Cannot start with 0
+- Pattern: `^[1-9][0-9]{7}$`
+
+### Required Fields
+- All fields marked as required must not be blank
+- Unique constraints apply to: telefono, email, dni
+
+## Technology Stack
+
+<CardGroup cols={2}>
+  <Card title="Framework" icon="spring">
+    Spring Boot with Spring Cloud
+  </Card>
+  <Card title="Database" icon="database">
+    MySQL with JPA/Hibernate
+  </Card>
+  <Card title="Validation" icon="check">
+    Jakarta Validation
+  </Card>
+  <Card title="Communication" icon="network-wired">
+    OpenFeign for inter-service calls
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Endpoints" icon="code" href="/api/medico/endpoints">
+    Explore all available endpoints with examples
+  </Card>
+  <Card title="Patient Service" icon="user" href="/api/paciente/overview">
+    Learn about patient management
+  </Card>
+</CardGroup>

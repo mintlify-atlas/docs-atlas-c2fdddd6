@@ -1,0 +1,649 @@
+---
+title: 'SPARQL Query Examples'
+description: 'Learn to write powerful SPARQL queries for the NOVA.ing medical ontology'
+---
+
+## Introduction
+
+SPARQL (SPARQL Protocol and RDF Query Language) is the standard query language for RDF data. This guide provides practical examples for querying the NOVA.ing medical attention ontology.
+
+<Info>
+  All queries can be executed via the `/sparql` endpoint or directly in the Fuseki web interface at http://localhost:3030/
+</Info>
+
+## Ontology Namespace
+
+All queries must declare the medical ontology prefix:
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+```
+
+---
+
+## Basic Queries
+
+### List All Patients
+
+<CodeGroup>
+```sparql SPARQL
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?paciente ?nombre ?dni ?email
+WHERE {
+  ?paciente a med:Paciente ;
+            med:nombreCompleto ?nombre ;
+            med:dniPaciente ?dni .
+  OPTIONAL { ?paciente med:emailPaciente ?email }
+}
+ORDER BY ?nombre
+```
+
+```json Response
+[
+  {
+    "paciente": "med:Paciente_456",
+    "nombre": "Juan Pérez García",
+    "dni": "12345678",
+    "email": "juan.perez@example.com"
+  },
+  {
+    "paciente": "med:Paciente_789",
+    "nombre": "María González López",
+    "dni": "87654321",
+    "email": "maria.gonzalez@example.com"
+  }
+]
+```
+</CodeGroup>
+
+### List All Doctors
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?medico ?nombre ?dni ?especialidad
+WHERE {
+  ?medico a med:Medico ;
+          med:nombreMedico ?nombre ;
+          med:dniMedico ?dni ;
+          med:especialidad ?especialidad .
+}
+ORDER BY ?especialidad ?nombre
+```
+
+### List All Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?cita ?fecha ?hora ?motivo ?estado
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:estadoCita ?estado .
+  OPTIONAL { ?cita med:horaInicio ?hora }
+}
+ORDER BY DESC(?fecha) DESC(?hora)
+LIMIT 50
+```
+
+---
+
+## Relationship Queries
+
+### Find Appointments with Patient and Doctor Info
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?hora ?motivo ?estado ?pacienteNombre ?medicoNombre ?especialidad
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:estadoCita ?estado ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+  
+  OPTIONAL { ?cita med:horaInicio ?hora }
+}
+ORDER BY DESC(?fecha)
+LIMIT 20
+```
+
+### Find Diagnoses for a Specific Appointment
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?descripcion ?tipo
+WHERE {
+  med:Cita_123 med:generaDiagnostico ?diagnostico .
+  ?diagnostico med:descripcionDiag ?descripcion ;
+               med:tipoDiag ?tipo .
+}
+```
+
+### Find All Appointments for a Patient by DNI
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?hora ?motivo ?estado ?medicoNombre ?especialidad
+WHERE {
+  ?paciente med:dniPaciente "12345678" .
+  
+  ?cita med:citaAgendadaPara ?paciente ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:estadoCita ?estado ;
+        med:atendidaPor ?medico .
+  
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+  
+  OPTIONAL { ?cita med:horaInicio ?hora }
+}
+ORDER BY DESC(?fecha)
+```
+
+---
+
+## Filtered Queries
+
+### Find Cardiology Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?hora ?pacienteNombre ?medicoNombre ?motivo
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad "CARDIOLOGIA" .
+  
+  OPTIONAL { ?cita med:horaInicio ?hora }
+}
+ORDER BY ?fecha ?hora
+```
+
+### Find Completed Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?pacienteNombre ?medicoNombre ?especialidad ?motivo
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:estadoCita "REALIZADA" ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+}
+ORDER BY DESC(?fecha)
+```
+
+### Find Appointments in Date Range
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?hora ?pacienteNombre ?medicoNombre ?especialidad
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+  
+  OPTIONAL { ?cita med:horaInicio ?hora }
+  
+  FILTER(?fecha >= "2024-01-01" && ?fecha <= "2024-01-31")
+}
+ORDER BY ?fecha
+```
+
+### Find Canceled or No-Show Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?estado ?pacienteNombre ?medicoNombre ?motivo
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:estadoCita ?estado ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre .
+  
+  FILTER(?estado IN ("CANCELADA", "NO_ASISTIO"))
+}
+ORDER BY DESC(?fecha)
+```
+
+---
+
+## Aggregation Queries
+
+### Count Appointments per Doctor
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?medicoNombre ?especialidad (COUNT(?cita) AS ?totalCitas)
+WHERE {
+  ?cita a med:Cita ;
+        med:atendidaPor ?medico .
+  
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+}
+GROUP BY ?medicoNombre ?especialidad
+ORDER BY DESC(?totalCitas)
+```
+
+### Count Appointments per Specialty
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?especialidad (COUNT(?cita) AS ?total)
+WHERE {
+  ?cita a med:Cita ;
+        med:atendidaPor ?medico .
+  
+  ?medico med:especialidad ?especialidad .
+}
+GROUP BY ?especialidad
+ORDER BY DESC(?total)
+```
+
+### Count Appointments by Status
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?estado (COUNT(?cita) AS ?cantidad)
+WHERE {
+  ?cita a med:Cita ;
+        med:estadoCita ?estado .
+}
+GROUP BY ?estado
+ORDER BY DESC(?cantidad)
+```
+
+### Top 5 Doctors with Most Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?medicoNombre ?especialidad (COUNT(?cita) AS ?totalCitas)
+WHERE {
+  ?cita a med:Cita ;
+        med:atendidaPor ?medico .
+  
+  ?medico med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+}
+GROUP BY ?medicoNombre ?especialidad
+ORDER BY DESC(?totalCitas)
+LIMIT 5
+```
+
+### Average Appointments per Patient
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT (AVG(?citasPorPaciente) AS ?promedio)
+WHERE {
+  SELECT (COUNT(?cita) AS ?citasPorPaciente)
+  WHERE {
+    ?cita med:citaAgendadaPara ?paciente .
+  }
+  GROUP BY ?paciente
+}
+```
+
+---
+
+## Advanced Queries
+
+### Find Patients with Multiple Appointments in Different Specialties
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?pacienteNombre ?dni (COUNT(DISTINCT ?especialidad) AS ?especialidades)
+WHERE {
+  ?paciente a med:Paciente ;
+            med:nombreCompleto ?pacienteNombre ;
+            med:dniPaciente ?dni .
+  
+  ?cita med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?medico med:especialidad ?especialidad .
+}
+GROUP BY ?pacienteNombre ?dni
+HAVING (COUNT(DISTINCT ?especialidad) > 1)
+ORDER BY DESC(?especialidades)
+```
+
+### Find Doctors with No Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?medicoNombre ?especialidad
+WHERE {
+  ?medico a med:Medico ;
+          med:nombreMedico ?medicoNombre ;
+          med:especialidad ?especialidad .
+  
+  FILTER NOT EXISTS {
+    ?cita med:atendidaPor ?medico .
+  }
+}
+ORDER BY ?especialidad ?medicoNombre
+```
+
+### Find Appointments with Diagnoses
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?pacienteNombre ?medicoNombre ?descripcionDiag ?tipoDiag
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico ;
+        med:generaDiagnostico ?diagnostico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre .
+  ?diagnostico med:descripcionDiag ?descripcionDiag ;
+               med:tipoDiag ?tipoDiag .
+}
+ORDER BY DESC(?fecha)
+```
+
+### Find Definitive Diagnoses by Specialty
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?especialidad ?descripcionDiag ?pacienteNombre ?fecha
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico ;
+        med:generaDiagnostico ?diagnostico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:especialidad ?especialidad .
+  ?diagnostico med:descripcionDiag ?descripcionDiag ;
+               med:tipoDiag "DEFINITIVO" .
+}
+ORDER BY ?especialidad DESC(?fecha)
+```
+
+### Find Patients with No Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?pacienteNombre ?dni ?email
+WHERE {
+  ?paciente a med:Paciente ;
+            med:nombreCompleto ?pacienteNombre ;
+            med:dniPaciente ?dni .
+  
+  OPTIONAL { ?paciente med:emailPaciente ?email }
+  
+  FILTER NOT EXISTS {
+    ?cita med:citaAgendadaPara ?paciente .
+  }
+}
+ORDER BY ?pacienteNombre
+```
+
+---
+
+## Text Search Queries
+
+### Search Appointments by Reason (REGEX)
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?fecha ?motivo ?pacienteNombre ?medicoNombre
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:motivoCita ?motivo ;
+        med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?medico med:nombreMedico ?medicoNombre .
+  
+  FILTER REGEX(?motivo, "control", "i")
+}
+ORDER BY DESC(?fecha)
+```
+
+### Search Diagnoses by Description
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+SELECT ?descripcionDiag ?tipoDiag ?fecha ?pacienteNombre
+WHERE {
+  ?cita a med:Cita ;
+        med:fechaCita ?fecha ;
+        med:citaAgendadaPara ?paciente ;
+        med:generaDiagnostico ?diagnostico .
+  
+  ?paciente med:nombreCompleto ?pacienteNombre .
+  ?diagnostico med:descripcionDiag ?descripcionDiag ;
+               med:tipoDiag ?tipoDiag .
+  
+  FILTER REGEX(?descripcionDiag, "hipertensión|diabetes", "i")
+}
+ORDER BY DESC(?fecha)
+```
+
+---
+
+## CONSTRUCT Queries
+
+CONSTRUCT queries create new RDF graphs from existing data.
+
+### Extract Patient-Doctor Network
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+CONSTRUCT {
+  ?paciente med:fueTratadoPor ?medico .
+}
+WHERE {
+  ?cita med:citaAgendadaPara ?paciente ;
+        med:atendidaPor ?medico ;
+        med:estadoCita "REALIZADA" .
+}
+```
+
+---
+
+## ASK Queries
+
+ASK queries return boolean values.
+
+### Check if Patient Has Any Appointments
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+ASK {
+  ?paciente med:dniPaciente "12345678" .
+  ?cita med:citaAgendadaPara ?paciente .
+}
+```
+
+### Check if Doctor Has Appointments Today
+
+```sparql
+PREFIX med: <http://org.nova.atencion.medica/ontologia#>
+
+ASK {
+  ?medico med:dniMedico "87654321" .
+  ?cita med:atendidaPor ?medico ;
+        med:fechaCita "2024-05-15" .
+}
+```
+
+---
+
+## Query Optimization Tips
+
+<AccordionGroup>
+  <Accordion title="Use LIMIT for large result sets">
+    Always add `LIMIT` when you expect many results to avoid timeouts:
+    ```sparql
+    SELECT * WHERE { ?s ?p ?o }
+    LIMIT 100
+    ```
+  </Accordion>
+
+  <Accordion title="Be specific with triple patterns">
+    Narrow down your query early:
+    ```sparql
+    # Good: specific type first
+    ?cita a med:Cita ;
+          med:estadoCita "REALIZADA" .
+    
+    # Bad: generic pattern first
+    ?s ?p ?o .
+    ?s a med:Cita .
+    ```
+  </Accordion>
+
+  <Accordion title="Use FILTER efficiently">
+    Place FILTERs close to the patterns they filter:
+    ```sparql
+    ?cita med:fechaCita ?fecha .
+    FILTER(?fecha >= "2024-01-01")
+    ```
+  </Accordion>
+
+  <Accordion title="Prefer OPTIONAL for non-critical fields">
+    Use `OPTIONAL` for fields that might not exist:
+    ```sparql
+    ?paciente med:nombreCompleto ?nombre .
+    OPTIONAL { ?paciente med:emailPaciente ?email }
+    ```
+  </Accordion>
+
+  <Accordion title="Use COUNT(*) when you only need totals">
+    Don't retrieve all data if you only need counts:
+    ```sparql
+    SELECT (COUNT(*) AS ?total)
+    WHERE { ?cita a med:Cita }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Using SPARQL Endpoint via API
+
+Execute any SPARQL query via the REST API:
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/semantic/sparql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "PREFIX med: <http://org.nova.atencion.medica/ontologia#> SELECT ?nombre ?especialidad WHERE { ?medico a med:Medico ; med:nombreMedico ?nombre ; med:especialidad ?especialidad } LIMIT 10"
+  }'
+```
+
+<Warning>
+  The `/sparql` endpoint only accepts **SELECT** queries. UPDATE, INSERT, and DELETE queries are blocked.
+</Warning>
+
+---
+
+## Query in Fuseki Web Interface
+
+You can also run queries directly in the Fuseki web UI:
+
+<Steps>
+  <Step title="Access Fuseki">
+    Navigate to http://localhost:3030/
+  </Step>
+  
+  <Step title="Select dataset">
+    Click on the `atencion_medica` dataset
+  </Step>
+  
+  <Step title="Go to Query tab">
+    Click the "Query" tab in the navigation
+  </Step>
+  
+  <Step title="Write query">
+    Enter your SPARQL query in the text editor
+  </Step>
+  
+  <Step title="Execute">
+    Click "Execute" to see results in table or JSON format
+  </Step>
+</Steps>
+
+---
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="W3C SPARQL Spec" icon="book" href="https://www.w3.org/TR/sparql11-query/">
+    Official SPARQL 1.1 specification
+  </Card>
+  <Card title="Apache Jena Docs" icon="file-code" href="https://jena.apache.org/documentation/query/">
+    Jena's SPARQL documentation
+  </Card>
+  <Card title="SPARQL Tutorial" icon="graduation-cap" href="https://www.w3.org/2009/Talks/0615-qbe/">
+    Learn SPARQL by example
+  </Card>
+  <Card title="Semantic API Endpoints" icon="plug" href="/api/semantic/endpoints">
+    Return to endpoint documentation
+  </Card>
+</CardGroup>

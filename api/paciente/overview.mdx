@@ -1,0 +1,155 @@
+---
+title: Patient Service Overview
+description: API service for managing patient records, appointments, and medical history in NOVA.ing Atención Médica
+---
+
+## Overview
+
+The Patient Service (msvc-paciente) is a core microservice that manages patient information, appointments scheduling, and medical history within the NOVA.ing medical care platform.
+
+## Base URL
+
+```
+http://localhost:8001/pacientes
+```
+
+## Technology Stack
+
+- **Framework**: Spring Boot 3.x
+- **Language**: Java 25
+- **Database**: PostgreSQL
+- **Validation**: Jakarta Validation
+- **Communication**: OpenFeign (inter-service)
+- **Build Tool**: Maven
+
+## Key Features
+
+### Patient Management
+- Complete CRUD operations for patient records
+- Soft delete and permanent delete capabilities
+- Unique validation for DNI, phone, and email
+- Patient state management (ACTIVO/INACTIVO)
+
+### Appointment Management
+- Schedule appointments from patient module
+- View patient appointments (citas)
+- Change appointment status (patient-owned)
+
+### Medical History
+- Access complete medical history
+- View all diagnoses associated with a patient
+
+## Data Model
+
+### Patient Entity
+
+The core patient entity includes:
+
+<ResponseField name="id" type="Long">
+  Unique identifier (auto-generated)
+</ResponseField>
+
+<ResponseField name="nombres" type="String" required>
+  Patient's first name(s)
+</ResponseField>
+
+<ResponseField name="apellidos" type="String" required>
+  Patient's last name(s)
+</ResponseField>
+
+<ResponseField name="fechaNacimiento" type="Date" required>
+  Date of birth
+</ResponseField>
+
+<ResponseField name="genero" type="GeneroPaciente" required>
+  Gender: `MASCULINO` or `FEMENINO`
+</ResponseField>
+
+<ResponseField name="dni" type="String" required>
+  National ID number (8 digits, must start with 1-9)
+  - Pattern: `^[1-9][0-9]{7}$`
+  - Unique constraint
+</ResponseField>
+
+<ResponseField name="telefono" type="String" required>
+  Phone number (9 digits, must start with 9)
+  - Pattern: `^9[0-9]{8}$`
+  - Unique constraint
+</ResponseField>
+
+<ResponseField name="email" type="String" required>
+  Email address
+  - Must be valid email format
+  - Unique constraint
+</ResponseField>
+
+<ResponseField name="direccion" type="String" required>
+  Physical address
+</ResponseField>
+
+<ResponseField name="estado" type="EstadoPaciente" required>
+  Patient status: `ACTIVO` or `INACTIVO`
+</ResponseField>
+
+<ResponseField name="usuarioId" type="Long">
+  Associated user account ID
+</ResponseField>
+
+## Validation Rules
+
+### DNI Validation
+- Must be exactly 8 digits
+- First digit must be between 1-9
+- Must be unique in the system
+
+### Phone Validation
+- Must be exactly 9 digits
+- Must start with 9 (Peruvian mobile format)
+- Must be unique in the system
+
+### Email Validation
+- Must follow standard email format
+- Must be unique in the system
+
+## Error Handling
+
+The API returns structured error responses for validation failures:
+
+```json
+{
+  "fieldName": "El campo fieldName [error message]"
+}
+```
+
+Common HTTP status codes:
+- `200 OK` - Successful request
+- `201 CREATED` - Resource created successfully
+- `204 NO CONTENT` - Successful deletion
+- `400 BAD REQUEST` - Validation errors or malformed request
+- `403 FORBIDDEN` - Permission denied (e.g., unauthorized appointment status change)
+- `404 NOT FOUND` - Resource not found
+- `500 INTERNAL SERVER ERROR` - Server error
+
+## Authentication
+
+<Note>
+  For academic purposes, all endpoints are currently open without authentication. In production, implement proper JWT or OAuth2 authentication.
+</Note>
+
+## Related Services
+
+The Patient Service interacts with:
+- **Appointment Service** (msvc-cita) - For scheduling and managing appointments
+- **Medical Service** (msvc-medico) - For doctor information
+- **Diagnostic Service** - For medical history and diagnoses
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Endpoints" icon="code" href="/api/paciente/endpoints">
+    View all available API endpoints with examples
+  </Card>
+  <Card title="Communication Patterns" icon="arrows-left-right" href="/concepts/communication">
+    Learn about inter-service communication with OpenFeign
+  </Card>
+</CardGroup>

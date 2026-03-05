@@ -1,0 +1,118 @@
+---
+title: 'Overview'
+description: 'Medical Diagnosis Service API for NOVA.ing Atención Médica'
+---
+
+## Introduction
+
+The Diagnosis Service manages medical diagnoses within the NOVA.ing healthcare system. This microservice handles the creation, retrieval, modification, and deletion of patient diagnoses linked to medical appointments.
+
+## Base URL
+
+```
+/diagnosticos
+```
+
+## Key Features
+
+- **CRUD Operations**: Complete lifecycle management for medical diagnoses
+- **Appointment Integration**: Link diagnoses to specific medical appointments
+- **Patient History**: Retrieve all diagnoses for a patient
+- **Enriched Details**: Get diagnosis information with related appointment and patient data
+- **Soft Delete**: Support for both soft and permanent deletion
+- **Type Classification**: Categorize diagnoses using predefined types
+
+## Diagnosis Types
+
+The service supports the following diagnosis types:
+
+| Type | Description |
+|------|-------------|
+| `PRESUNTIVO` | Presumptive diagnosis - initial assessment based on symptoms |
+| `DEFINITIVO` | Definitive diagnosis - confirmed after tests and evaluation |
+| `PRINCIPAL` | Principal diagnosis - primary condition being treated |
+| `SECUNDARIO` | Secondary diagnosis - additional related conditions |
+| `RECURRENTE` | Recurrent diagnosis - condition that has returned |
+| `DESCARTADO` | Ruled out diagnosis - condition that has been eliminated |
+
+## Data Model
+
+### DiagnosticoEntity
+
+Core diagnosis entity with the following attributes:
+
+<ResponseField name="id" type="Long">
+  Unique identifier for the diagnosis
+</ResponseField>
+
+<ResponseField name="descripcion" type="String" required>
+  Detailed description of the diagnosis
+</ResponseField>
+
+<ResponseField name="tipoDiagnostico" type="TipoDiagnostico" required>
+  Type of diagnosis (PRESUNTIVO, DEFINITIVO, PRINCIPAL, SECUNDARIO, RECURRENTE, DESCARTADO)
+</ResponseField>
+
+<ResponseField name="fechaDiagnostico" type="Date" required>
+  Date when the diagnosis was made
+</ResponseField>
+
+<ResponseField name="citaId" type="Long" required>
+  ID of the associated appointment
+</ResponseField>
+
+<ResponseField name="pacienteId" type="Long" required>
+  ID of the patient receiving the diagnosis
+</ResponseField>
+
+<ResponseField name="activo" type="boolean" default="true">
+  Active status flag for soft deletion
+</ResponseField>
+
+### DiagnosticoDetalle
+
+Enriched diagnosis object containing related appointment and patient information:
+
+<ResponseField name="diagnostico" type="DiagnosticoEntity">
+  The core diagnosis entity
+</ResponseField>
+
+<ResponseField name="cita" type="Cita">
+  Complete appointment details including date, time, reason, and status
+</ResponseField>
+
+<ResponseField name="paciente" type="Paciente">
+  Complete patient information including personal and contact details
+</ResponseField>
+
+## Authentication
+
+All endpoints require proper authentication via the API Gateway. Include the authentication token in the request headers.
+
+## Error Handling
+
+The API returns standard HTTP status codes:
+
+- `200 OK`: Successful GET/PUT request
+- `201 Created`: Successful POST request
+- `204 No Content`: Successful DELETE request
+- `400 Bad Request`: Validation errors
+- `404 Not Found`: Resource not found
+- `500 Internal Server Error`: Server-side errors
+
+Validation errors return a map of field names to error messages:
+
+```json
+{
+  "descripcion": "El campo descripcion no debe estar vacío",
+  "tipoDiagnostico": "El campo tipoDiagnostico no debe ser nulo"
+}
+```
+
+## Related Services
+
+The Diagnosis Service integrates with:
+
+- **Appointment Service** (`msvc-citas`): Fetches appointment details
+- **Patient Service** (`msvc-pacientes`): Retrieves patient information
+- **API Gateway**: Routes and authenticates requests

@@ -1,0 +1,505 @@
+---
+title: 'Semantic API Endpoints'
+description: 'Complete reference for all Semantic Web Service endpoints'
+---
+
+## Base URL
+
+```
+GET/POST http://localhost:8080/api/v1/semantic
+```
+
+All endpoints in this service are prefixed with `/api/v1/semantic`.
+
+---
+
+## Natural Language Search
+
+<CodeGroup>
+```bash Request
+curl -X GET "http://localhost:8080/api/v1/semantic/buscar?texto=citas%20de%20cardiologia%20del%20paciente%2012345678" \
+  -H "Content-Type: application/json"
+```
+
+```json Response
+[
+  {
+    "citaId": "123",
+    "fechaCita": "2024-05-15",
+    "horaInicio": "09:00",
+    "motivoCita": "Control cardíaco",
+    "estadoCita": "PROGRAMADA",
+    "nombrePaciente": "Juan Pérez García",
+    "dniPaciente": "12345678",
+    "nombreMedico": "Dr. María López",
+    "especialidad": "CARDIOLOGIA"
+  }
+]
+```
+</CodeGroup>
+
+### GET `/buscar`
+
+Search medical records using natural language queries in Spanish. The service automatically parses the text and converts it to SPARQL.
+
+<ParamField query="texto" type="string" required>
+  Natural language query in Spanish
+</ParamField>
+
+#### Supported Query Patterns
+
+The parser recognizes:
+
+- **DNI**: 8-digit patient or doctor identification numbers
+- **Names**: Patient or doctor names (e.g., "Juan Pérez")
+- **Specialties**: Medical specialties like cardiología, pediatría, traumatología
+- **Appointment states**: programada, cancelada, realizada, reprogramada, no asistió
+- **Date expressions**: 
+  - Relative: "hoy", "ayer", "mañana", "esta semana", "este mes"
+  - Absolute: "2024-05-15" or date ranges "2024-05-01 2024-05-31"
+- **Time**: Hour ranges like "09:00" or "14:30:00"
+- **Rankings**: "top 5 médicos", "mejores doctores", "ranking de especialistas"
+- **Availability**: "médicos disponibles", "horarios libres"
+- **Diagnosis types**: "diagnóstico presuntivo" or "diagnóstico definitivo"
+
+#### Example Queries
+
+<Accordion title="Patient appointments by DNI">
+  **Query:** `citas del paciente 12345678`
+  
+  Returns all appointments for patient with DNI 12345678
+</Accordion>
+
+<Accordion title="Specialty appointments today">
+  **Query:** `citas de cardiología de hoy`
+  
+  Returns all cardiology appointments scheduled for today
+</Accordion>
+
+<Accordion title="Doctor rankings">
+  **Query:** `ranking top 5 médicos con más citas esta semana`
+  
+  Returns the 5 doctors with the most appointments this week, sorted descending
+</Accordion>
+
+<Accordion title="Available doctors">
+  **Query:** `médicos disponibles en pediatría mañana`
+  
+  Returns pediatricians with availability tomorrow
+</Accordion>
+
+<Accordion title="Date range query">
+  **Query:** `citas realizadas entre 2024-01-01 y 2024-01-31`
+  
+  Returns all completed appointments in January 2024
+</Accordion>
+
+<Accordion title="Diagnosis search">
+  **Query:** `diagnósticos definitivos del paciente 87654321`
+  
+  Returns definitive diagnoses for patient with DNI 87654321
+</Accordion>
+
+#### Response Format
+
+Returns an array of objects with variable fields depending on the query:
+
+<ResponseField name="citaId" type="string">
+  Unique appointment identifier
+</ResponseField>
+
+<ResponseField name="fechaCita" type="string">
+  Appointment date (YYYY-MM-DD format)
+</ResponseField>
+
+<ResponseField name="horaInicio" type="string">
+  Start time (HH:mm or HH:mm:ss)
+</ResponseField>
+
+<ResponseField name="horaFin" type="string">
+  End time (HH:mm or HH:mm:ss)
+</ResponseField>
+
+<ResponseField name="motivoCita" type="string">
+  Reason for the appointment
+</ResponseField>
+
+<ResponseField name="estadoCita" type="string">
+  Appointment status: PROGRAMADA, REALIZADA, CANCELADA, REPROGRAMADA, NO_ASISTIO
+</ResponseField>
+
+<ResponseField name="nombrePaciente" type="string">
+  Full patient name
+</ResponseField>
+
+<ResponseField name="dniPaciente" type="string">
+  Patient DNI (8 digits)
+</ResponseField>
+
+<ResponseField name="nombreMedico" type="string">
+  Doctor's name
+</ResponseField>
+
+<ResponseField name="especialidad" type="string">
+  Medical specialty
+</ResponseField>
+
+<ResponseField name="descripcionDiag" type="string">
+  Diagnosis description (when querying diagnoses)
+</ResponseField>
+
+<ResponseField name="tipoDiag" type="string">
+  Diagnosis type: PRESUNTIVO or DEFINITIVO
+</ResponseField>
+
+---
+
+## Synchronize Appointment Data
+
+<CodeGroup>
+```bash Request
+curl -X POST "http://localhost:8080/api/v1/semantic/sync" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "citaId": 123,
+    "pacienteId": 456,
+    "medicoId": 789,
+    "fechaCita": "2024-05-15",
+    "horaInicio": "09:00",
+    "horaFin": "09:30",
+    "motivo": "Control cardíaco rutinario",
+    "estadoCita": "PROGRAMADA",
+    "dniPaciente": "12345678",
+    "nombrePaciente": "Juan",
+    "apellidoPaciente": "Pérez García",
+    "generoPaciente": "M",
+    "emailPaciente": "juan.perez@example.com",
+    "dniMedico": "87654321",
+    "nombreMedico": "María",
+    "apellidoMedico": "López Ruiz",
+    "especialidad": "CARDIOLOGIA",
+    "diagnosticos": [
+      {
+        "id": 1,
+        "citaId": 123,
+        "descripcion": "Hipertensión arterial leve",
+        "tipoDiagnostico": "DEFINITIVO"
+      }
+    ]
+  }'
+```
+
+```text Response
+Datos integrados correctamente en el Grafo de Fuseki.
+```
+</CodeGroup>
+
+### POST `/sync`
+
+Synchronize appointment data from other microservices to the RDF triple store. This endpoint should be called whenever an appointment is created or updated.
+
+<Info>
+  This endpoint implements **upsert** logic: it deletes existing triples for the appointment/patient/doctor before inserting fresh data.
+</Info>
+
+#### Request Body
+
+<ParamField body="citaId" type="long" required>
+  Unique appointment ID from msvc-cita database
+</ParamField>
+
+<ParamField body="pacienteId" type="long" required>
+  Patient ID from msvc-paciente database
+</ParamField>
+
+<ParamField body="medicoId" type="long" required>
+  Doctor ID from msvc-medico database
+</ParamField>
+
+<ParamField body="fechaCita" type="string" required>
+  Appointment date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField body="horaInicio" type="string">
+  Start time (HH:mm format)
+</ParamField>
+
+<ParamField body="horaFin" type="string">
+  End time (HH:mm format)
+</ParamField>
+
+<ParamField body="motivo" type="string" required>
+  Reason for the appointment
+</ParamField>
+
+<ParamField body="estadoCita" type="string" required>
+  Appointment status: PROGRAMADA, REALIZADA, CANCELADA, REPROGRAMADA, NO_ASISTIO, PENDIENTE, ATENDIDA
+</ParamField>
+
+<ParamField body="dniPaciente" type="string" required>
+  Patient DNI (8 digits)
+</ParamField>
+
+<ParamField body="nombrePaciente" type="string" required>
+  Patient first name
+</ParamField>
+
+<ParamField body="apellidoPaciente" type="string" required>
+  Patient last name
+</ParamField>
+
+<ParamField body="generoPaciente" type="string">
+  Patient gender (M/F)
+</ParamField>
+
+<ParamField body="emailPaciente" type="string">
+  Patient email address
+</ParamField>
+
+<ParamField body="dniMedico" type="string" required>
+  Doctor DNI (8 digits)
+</ParamField>
+
+<ParamField body="nombreMedico" type="string" required>
+  Doctor first name
+</ParamField>
+
+<ParamField body="apellidoMedico" type="string" required>
+  Doctor last name
+</ParamField>
+
+<ParamField body="especialidad" type="string" required>
+  Medical specialty: MEDICINA_GENERAL, CARDIOLOGIA, PEDIATRIA, TRAUMATOLOGIA, GINECOLOGIA, NEUROLOGIA, PSIQUIATRIA, NEUMOLOGIA, ONCOLOGIA, UROLOGIA, DERMATOLOGIA, OFTALMOLOGIA, ENDOCRINOLOGIA, OTORRINOLARINGOLOGIA
+</ParamField>
+
+<ParamField body="diagnosticos" type="array">
+  Array of diagnosis objects (optional)
+  
+  <Expandable title="Diagnosis object structure">
+    <ResponseField name="id" type="long">
+      Diagnosis ID from msvc-diagnostico database
+    </ResponseField>
+    
+    <ResponseField name="citaId" type="long">
+      Associated appointment ID
+    </ResponseField>
+    
+    <ResponseField name="descripcion" type="string">
+      Diagnosis description
+    </ResponseField>
+    
+    <ResponseField name="tipoDiagnostico" type="string">
+      PRESUNTIVO or DEFINITIVO
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+#### How It Works
+
+The sync process:
+
+1. Deletes existing RDF triples for the specified `citaId`, `pacienteId`, and `medicoId`
+2. Inserts fresh data as RDF triples in the Fuseki triple store
+3. Creates semantic relationships:
+   - `med:Cita_123 med:citaAgendadaPara med:Paciente_456`
+   - `med:Cita_123 med:atendidaPor med:Medico_789`
+   - `med:Cita_123 med:generaDiagnostico med:Diag_1`
+
+#### Response
+
+**Success (201 Created):**
+```text
+Datos integrados correctamente en el Grafo de Fuseki.
+```
+
+**Error (500 Internal Server Error):**
+```text
+Error al sincronizar con el motor semántico.
+```
+
+---
+
+## Bulk Load All Data
+
+<CodeGroup>
+```bash Request
+curl -X POST "http://localhost:8080/api/v1/semantic/bulk-load" \
+  -H "Content-Type: application/json"
+```
+
+```text Response
+Proceso de carga masiva iniciado exitosamente.
+```
+</CodeGroup>
+
+### POST `/bulk-load`
+
+Triggers a bulk synchronization process that loads ALL data from the microservices databases into the RDF triple store.
+
+<Warning>
+  This operation **clears the entire RDF graph** before loading. Use with caution in production.
+</Warning>
+
+#### Process Steps
+
+1. **Clear graph**: Executes `CLEAR DEFAULT` to remove all existing triples
+2. **Load patients**: Fetches all patients from msvc-paciente
+3. **Load doctors**: Fetches all doctors from msvc-medico
+4. **Load appointments**: Fetches all appointments from msvc-cita and syncs with patient/doctor data
+5. **Load diagnoses**: Fetches all diagnoses from msvc-diagnostico and links to appointments
+
+#### When to Use
+
+- Initial setup of the semantic database
+- After database restoration
+- When the RDF graph becomes out of sync with relational databases
+- Development/testing environments
+
+#### Response
+
+**Success (200 OK):**
+```text
+Proceso de carga masiva iniciado exitosamente.
+```
+
+<Info>
+  The bulk load runs **asynchronously**. Check logs for detailed progress and completion status.
+</Info>
+
+---
+
+## Execute SPARQL Query
+
+<CodeGroup>
+```bash Request
+curl -X POST "http://localhost:8080/api/v1/semantic/sparql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "PREFIX med: <http://org.nova.atencion.medica/ontologia#> SELECT ?nombre ?especialidad WHERE { ?medico a med:Medico ; med:nombreMedico ?nombre ; med:especialidad ?especialidad } LIMIT 10"
+  }'
+```
+
+```json Response
+[
+  {
+    "nombre": "María",
+    "especialidad": "CARDIOLOGIA"
+  },
+  {
+    "nombre": "Carlos",
+    "especialidad": "PEDIATRIA"
+  }
+]
+```
+</CodeGroup>
+
+### POST `/sparql`
+
+Execute a raw SPARQL query directly against the Fuseki triple store. This endpoint is intended for **administration and debugging** purposes.
+
+<Warning>
+  Only SPARQL SELECT queries are supported. UPDATE and DELETE queries are not allowed through this endpoint.
+</Warning>
+
+#### Request Body
+
+<ParamField body="query" type="string" required>
+  SPARQL SELECT query string
+</ParamField>
+
+#### Example Queries
+
+See the [SPARQL Queries](/api/semantic/sparql) page for detailed examples.
+
+#### Response
+
+Returns an array of objects where keys are the SPARQL variable names (without `?`) and values are the bindings.
+
+**Success (200 OK):**
+```json
+[
+  {
+    "variable1": "value1",
+    "variable2": "value2"
+  }
+]
+```
+
+**Error (400 Bad Request):**
+Returned when the `query` field is missing or empty.
+
+---
+
+## Error Handling
+
+All endpoints return appropriate HTTP status codes:
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 OK | Request successful |
+| 201 Created | Data successfully synchronized |
+| 400 Bad Request | Invalid request parameters or missing required fields |
+| 500 Internal Server Error | Server error or Fuseki connection failure |
+
+### Common Error Scenarios
+
+<AccordionGroup>
+  <Accordion title="Fuseki not running">
+    **Error:** Connection refused or timeout
+    
+    **Solution:** Ensure Fuseki is running on port 3030:
+    ```bash
+    cd msvc-web-semantica/target/apache-jena-fuseki-6.0.0
+    java -jar fuseki-server.jar
+    ```
+  </Accordion>
+
+  <Accordion title="Dataset not created">
+    **Error:** Dataset 'atencion_medica' not found
+    
+    **Solution:** Create the dataset in Fuseki web UI at http://localhost:3030/
+  </Accordion>
+
+  <Accordion title="Invalid SPARQL syntax">
+    **Error:** SPARQL parse error
+    
+    **Solution:** Validate your SPARQL query syntax. Ensure all prefixes are declared.
+  </Accordion>
+
+  <Accordion title="Missing required fields in /sync">
+    **Error:** 500 Internal Server Error
+    
+    **Solution:** Ensure all required fields (citaId, pacienteId, medicoId, fechaCita, estadoCita, etc.) are provided in the request body.
+  </Accordion>
+</AccordionGroup>
+
+## Integration Example
+
+Here's how msvc-cita might integrate with the Semantic API:
+
+```java
+@Service
+public class CitaService {
+    
+    @Autowired
+    private SemanticClient semanticClient;
+    
+    @Transactional
+    public Cita crearCita(CitaDTO dto) {
+        // Save to relational database
+        Cita cita = citaRepository.save(dto.toEntity());
+        
+        // Sync to semantic store
+        SyncRequestDTO syncDto = buildSyncRequest(cita);
+        semanticClient.sincronizar(syncDto);
+        
+        return cita;
+    }
+}
+```
+
+## Next Steps
+
+<Card title="Learn SPARQL" icon="graduation-cap" href="/api/semantic/sparql">
+  Master SPARQL queries to unlock the full power of semantic search
+</Card>

@@ -1,0 +1,278 @@
+---
+title: 'Initial Setup'
+description: 'Complete setup guide for NOVA.ing Atención Médica deployment'
+---
+
+## Overview
+
+NOVA.ing Atención Médica is a microservices-based medical attention management system consisting of 5 Spring Boot microservices and a React frontend. This guide will walk you through the complete setup process.
+
+## Architecture
+
+The system consists of the following components:
+
+- **msvc-medico** (Port 8080) - Manages doctors
+- **msvc-cita** (Port 8081) - Manages appointments
+- **msvc-diagnostico** (Port 8082) - Manages diagnoses
+- **msvc-paciente** (Port 8083) - Manages patients
+- **msvc-web-semantica** (Port 8084) - Manages semantic web functionality with Apache Jena
+- **nova-frontend** (Port 5173) - React + Vite frontend application
+
+## Prerequisites
+
+<Note>
+Ensure you have all required software installed before proceeding with the setup.
+</Note>
+
+You need the following installed on your system:
+
+- **Java 25** - Required for Spring Boot microservices
+- **Maven 3.x** - For building and running Spring Boot services
+- **Node.js 18+** and **npm** - For the React frontend
+- **MySQL** - Database for microservices (msvc-medico, msvc-cita, msvc-diagnostico, msvc-paciente)
+- **Apache Jena Fuseki** - Semantic web triplestore server
+
+### Verify Prerequisites
+
+<CodeGroup>
+```bash Java Version
+java -version
+# Should show Java 25
+```
+
+```bash Maven Version
+mvn -version
+# Should show Maven 3.x
+```
+
+```bash Node.js Version
+node -version
+# Should show v18 or higher
+```
+</CodeGroup>
+
+## Project Structure
+
+```
+NOVA_ing-AtencionMedica/
+├── msvc-medico/           # Doctor management service
+├── msvc-cita/             # Appointment management service
+├── msvc-diagnostico/      # Diagnosis management service
+├── msvc-paciente/         # Patient management service
+├── msvc-web-semantica/    # Semantic web service
+│   └── src/main/resources/ontology/
+│       └── atencion-medica.ttl  # Ontology file
+├── nova-frontend/         # React frontend
+├── pom.xml                # Parent POM
+├── run-backend.bat        # Windows script to start all microservices
+└── run-frontend.bat       # Windows script to start frontend
+```
+
+## Quick Start (Windows)
+
+<Warning>
+The quick start scripts are for Windows only. Linux/Mac users should follow the manual setup steps below.
+</Warning>
+
+If you're on Windows, you can use the provided batch scripts:
+
+<Steps>
+  <Step title="Start All Microservices">
+    Run the backend startup script:
+    ```bash
+    run-backend.bat
+    ```
+    This will start all 5 microservices in separate command windows.
+  </Step>
+
+  <Step title="Wait for Services to Start">
+    Wait for all microservices to fully initialize. Check each command window for startup completion messages.
+  </Step>
+
+  <Step title="Start Frontend">
+    Run the frontend startup script:
+    ```bash
+    run-frontend.bat
+    ```
+    The frontend will be available at `http://localhost:5173`
+  </Step>
+</Steps>
+
+## Manual Setup
+
+### Step 1: Configure Databases
+
+Before starting the microservices, ensure MySQL databases are configured. See the [Database Configuration](/deployment/database) guide for detailed instructions.
+
+### Step 2: Build the Project
+
+<Steps>
+  <Step title="Navigate to Project Root">
+    ```bash
+    cd NOVA_ing-AtencionMedica
+    ```
+  </Step>
+
+  <Step title="Build All Microservices">
+    Build the entire project using Maven:
+    ```bash
+    mvn clean install
+    ```
+    This will compile and package all 5 microservices.
+  </Step>
+</Steps>
+
+### Step 3: Start Microservices
+
+<Note>
+Start microservices in the order shown below to ensure proper initialization.
+</Note>
+
+<CodeGroup>
+```bash msvc-medico (Port 8080)
+cd msvc-medico
+mvn spring-boot:run
+```
+
+```bash msvc-cita (Port 8081)
+cd msvc-cita
+mvn spring-boot:run
+```
+
+```bash msvc-diagnostico (Port 8082)
+cd msvc-diagnostico
+mvn spring-boot:run
+```
+
+```bash msvc-paciente (Port 8083)
+cd msvc-paciente
+mvn spring-boot:run
+```
+
+```bash msvc-web-semantica (Port 8084)
+cd msvc-web-semantica
+mvn spring-boot:run
+```
+</CodeGroup>
+
+<Warning>
+Each microservice should be started in a separate terminal window or as a background process.
+</Warning>
+
+### Step 4: Setup Apache Jena Fuseki
+
+The semantic web service requires Apache Jena Fuseki to be configured:
+
+<Steps>
+  <Step title="Navigate to Fuseki Directory">
+    ```bash
+    cd msvc-web-semantica/target/apache-jena-fuseki-6.0.0
+    ```
+  </Step>
+
+  <Step title="Start Fuseki Server">
+    ```bash
+    java -jar fuseki-server.jar
+    ```
+    The Fuseki server will start on `http://localhost:3030`
+  </Step>
+
+  <Step title="Create Dataset">
+    Open your browser and navigate to:
+    ```
+    http://localhost:3030/
+    ```
+    
+    Click **"New dataset"** and configure:
+    - **Dataset name**: `atencion_medica`
+    - **Dataset type**: Persistent (TDB2) – dataset will persist across Fuseki restarts
+    
+    Click **Create dataset**.
+  </Step>
+
+  <Step title="Upload Ontology File">
+    1. In the Fuseki web interface, navigate to the `atencion_medica` dataset
+    2. Click **"add data"** or **"upload data"**
+    3. Select the file: `msvc-web-semantica/src/main/resources/ontology/atencion-medica.ttl`
+    4. In the **Actions** column, click **"upload now"**
+  </Step>
+</Steps>
+
+### Step 5: Start Frontend
+
+See the [Frontend Deployment](/deployment/frontend) guide for detailed frontend setup instructions.
+
+Quick start:
+
+```bash
+cd nova-frontend
+npm install
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## Verification
+
+Verify that all services are running correctly:
+
+<CodeGroup>
+```bash Check Microservices
+curl http://localhost:8080/actuator/health  # msvc-medico
+curl http://localhost:8081/actuator/health  # msvc-cita
+curl http://localhost:8082/actuator/health  # msvc-diagnostico
+curl http://localhost:8083/actuator/health  # msvc-paciente
+curl http://localhost:8084/actuator/health  # msvc-web-semantica
+```
+
+```bash Check Fuseki
+curl http://localhost:3030/$/ping
+```
+
+```bash Check Frontend
+curl http://localhost:5173
+```
+</CodeGroup>
+
+## Troubleshooting
+
+### Port Already in Use
+
+If you encounter port conflicts, modify the port in each service's `application.properties` file:
+
+```properties
+server.port=8080  # Change to an available port
+```
+
+### Maven Build Failures
+
+If Maven build fails, try:
+
+```bash
+mvn clean install -DskipTests
+```
+
+### Frontend Build Errors
+
+If the frontend fails to start:
+
+```bash
+cd nova-frontend
+npm run build
+npm run dev
+```
+
+### Database Connection Issues
+
+Ensure MySQL is running and credentials in `application.properties` are correct. See [Database Configuration](/deployment/database) for details.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Database Configuration" icon="database" href="/deployment/database">
+    Configure MySQL databases for all microservices
+  </Card>
+  <Card title="Frontend Deployment" icon="window" href="/deployment/frontend">
+    Setup and configure the React frontend
+  </Card>
+</CardGroup>

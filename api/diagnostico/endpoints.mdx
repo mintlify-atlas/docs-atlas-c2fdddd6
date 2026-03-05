@@ -1,0 +1,611 @@
+---
+title: 'Endpoints'
+description: 'Complete API reference for Diagnosis Service endpoints'
+---
+
+## List All Diagnoses
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8005/diagnosticos \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**GET** `/diagnosticos`
+
+Retrieves a list of all diagnoses in the system.
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity[]">
+  Array of diagnosis entities
+  
+  <Expandable title="DiagnosticoEntity properties">
+    <ResponseField name="id" type="Long">
+      Diagnosis ID
+    </ResponseField>
+    <ResponseField name="descripcion" type="String">
+      Diagnosis description
+    </ResponseField>
+    <ResponseField name="tipoDiagnostico" type="String">
+      Type of diagnosis (PRESUNTIVO, DEFINITIVO, etc.)
+    </ResponseField>
+    <ResponseField name="fechaDiagnostico" type="Date">
+      Date of diagnosis (ISO 8601 format)
+    </ResponseField>
+    <ResponseField name="citaId" type="Long">
+      Associated appointment ID
+    </ResponseField>
+    <ResponseField name="pacienteId" type="Long">
+      Patient ID
+    </ResponseField>
+    <ResponseField name="activo" type="boolean">
+      Active status flag
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "descripcion": "Hipertensión arterial esencial",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25,
+    "activo": true
+  },
+  {
+    "id": 2,
+    "descripcion": "Diabetes mellitus tipo 2",
+    "tipoDiagnostico": "PRINCIPAL",
+    "fechaDiagnostico": "2024-03-16T14:00:00",
+    "citaId": 102,
+    "pacienteId": 26,
+    "activo": true
+  }
+]
+```
+
+---
+
+## Get Diagnosis by ID
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8005/diagnosticos/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**GET** `/diagnosticos/{id}`
+
+Retrieves a single diagnosis by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the diagnosis
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity">
+  Single diagnosis entity
+</ResponseField>
+
+### Status Codes
+
+- `200 OK`: Diagnosis found and returned
+- `404 Not Found`: Diagnosis with specified ID does not exist
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "descripcion": "Hipertensión arterial esencial",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2024-03-15T10:30:00",
+  "citaId": 101,
+  "pacienteId": 25,
+  "activo": true
+}
+```
+
+---
+
+## Get Diagnosis with Complete Details
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8005/diagnosticos/con-detalle/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**GET** `/diagnosticos/con-detalle/{id}`
+
+Retrieves a diagnosis with enriched details including appointment and patient information. This endpoint performs inter-service communication to fetch related data.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the diagnosis
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoDetalle">
+  Enriched diagnosis object with related entities
+  
+  <Expandable title="DiagnosticoDetalle properties">
+    <ResponseField name="diagnostico" type="DiagnosticoEntity">
+      The core diagnosis entity
+      
+      <Expandable title="DiagnosticoEntity properties">
+        <ResponseField name="id" type="Long">Diagnosis ID</ResponseField>
+        <ResponseField name="descripcion" type="String">Diagnosis description</ResponseField>
+        <ResponseField name="tipoDiagnostico" type="String">Diagnosis type</ResponseField>
+        <ResponseField name="fechaDiagnostico" type="Date">Diagnosis date</ResponseField>
+        <ResponseField name="citaId" type="Long">Appointment ID</ResponseField>
+        <ResponseField name="pacienteId" type="Long">Patient ID</ResponseField>
+        <ResponseField name="activo" type="boolean">Active status</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="cita" type="Cita">
+      Related appointment details
+      
+      <Expandable title="Cita properties">
+        <ResponseField name="id" type="Long">Appointment ID</ResponseField>
+        <ResponseField name="fechaCita" type="Date">Appointment date</ResponseField>
+        <ResponseField name="horaInicio" type="String">Start time</ResponseField>
+        <ResponseField name="horaFin" type="String">End time</ResponseField>
+        <ResponseField name="motivo" type="String">Appointment reason</ResponseField>
+        <ResponseField name="estado" type="String">Appointment status</ResponseField>
+        <ResponseField name="pacienteId" type="Long">Patient ID</ResponseField>
+        <ResponseField name="medicoId" type="Long">Doctor ID</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="paciente" type="Paciente">
+      Related patient information
+      
+      <Expandable title="Paciente properties">
+        <ResponseField name="id" type="Long">Patient ID</ResponseField>
+        <ResponseField name="nombres" type="String">First names</ResponseField>
+        <ResponseField name="apellidos" type="String">Last names</ResponseField>
+        <ResponseField name="fechaNacimiento" type="Date">Date of birth</ResponseField>
+        <ResponseField name="genero" type="String">Gender</ResponseField>
+        <ResponseField name="dni" type="String">National ID</ResponseField>
+        <ResponseField name="telefono" type="String">Phone number</ResponseField>
+        <ResponseField name="email" type="String">Email address</ResponseField>
+        <ResponseField name="direccion" type="String">Physical address</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Status Codes
+
+- `200 OK`: Diagnosis with details found and returned
+- `404 Not Found`: Diagnosis does not exist
+
+### Example Response
+
+```json
+{
+  "diagnostico": {
+    "id": 1,
+    "descripcion": "Hipertensión arterial esencial",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25,
+    "activo": true
+  },
+  "cita": {
+    "id": 101,
+    "fechaCita": "2024-03-15T00:00:00",
+    "horaInicio": "10:00",
+    "horaFin": "10:30",
+    "motivo": "Consulta de control",
+    "estado": "COMPLETADA",
+    "pacienteId": 25,
+    "medicoId": 5
+  },
+  "paciente": {
+    "id": 25,
+    "nombres": "Juan Carlos",
+    "apellidos": "García López",
+    "fechaNacimiento": "1975-05-20T00:00:00",
+    "genero": "M",
+    "dni": "12345678",
+    "telefono": "+51987654321",
+    "email": "juan.garcia@example.com",
+    "direccion": "Av. Principal 123, Lima"
+  }
+}
+```
+
+---
+
+## Get Diagnoses by Appointment
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8005/diagnosticos/cita/101 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**GET** `/diagnosticos/cita/{id}`
+
+Retrieves all diagnoses associated with a specific appointment.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The appointment ID to filter diagnoses
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity[]">
+  Array of diagnosis entities for the specified appointment
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "descripcion": "Hipertensión arterial esencial",
+    "tipoDiagnostico": "PRINCIPAL",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25,
+    "activo": true
+  },
+  {
+    "id": 3,
+    "descripcion": "Dislipidemia mixta",
+    "tipoDiagnostico": "SECUNDARIO",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25,
+    "activo": true
+  }
+]
+```
+
+---
+
+## Get Diagnoses by Patient
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8005/diagnosticos/paciente/25 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**GET** `/diagnosticos/paciente/{id}`
+
+Retrieves all diagnoses for a specific patient. This endpoint provides the complete medical diagnosis history for a patient.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The patient ID to filter diagnoses
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity[]">
+  Array of all diagnosis entities for the specified patient
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "descripcion": "Hipertensión arterial esencial",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25,
+    "activo": true
+  },
+  {
+    "id": 5,
+    "descripcion": "Gripe estacional",
+    "tipoDiagnostico": "PRESUNTIVO",
+    "fechaDiagnostico": "2024-02-20T09:00:00",
+    "citaId": 87,
+    "pacienteId": 25,
+    "activo": true
+  }
+]
+```
+
+---
+
+## Create Diagnosis
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8005/diagnosticos \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "descripcion": "Diabetes mellitus tipo 2",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2024-03-16T14:00:00",
+    "citaId": 102,
+    "pacienteId": 26
+  }'
+```
+</CodeGroup>
+
+**POST** `/diagnosticos`
+
+Creates a new diagnosis record.
+
+### Request Body
+
+<ParamField body="descripcion" type="String" required>
+  Detailed description of the diagnosis
+</ParamField>
+
+<ParamField body="tipoDiagnostico" type="TipoDiagnostico" required>
+  Type of diagnosis. Must be one of: PRESUNTIVO, DEFINITIVO, PRINCIPAL, SECUNDARIO, RECURRENTE, DESCARTADO
+</ParamField>
+
+<ParamField body="fechaDiagnostico" type="Date" required>
+  Date and time when the diagnosis was made (ISO 8601 format)
+</ParamField>
+
+<ParamField body="citaId" type="Long" required>
+  ID of the associated appointment
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  ID of the patient receiving the diagnosis
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity">
+  The newly created diagnosis entity with generated ID
+</ResponseField>
+
+### Status Codes
+
+- `201 Created`: Diagnosis successfully created
+- `400 Bad Request`: Validation errors in request body
+
+### Validation Rules
+
+- All required fields must be provided and not null
+- `tipoDiagnostico` must be a valid enum value
+- `fechaDiagnostico` must be a valid date format
+
+### Example Request
+
+```json
+{
+  "descripcion": "Diabetes mellitus tipo 2",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2024-03-16T14:00:00",
+  "citaId": 102,
+  "pacienteId": 26
+}
+```
+
+### Example Response
+
+```json
+{
+  "id": 7,
+  "descripcion": "Diabetes mellitus tipo 2",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2024-03-16T14:00:00",
+  "citaId": 102,
+  "pacienteId": 26,
+  "activo": true
+}
+```
+
+### Example Error Response
+
+```json
+{
+  "descripcion": "El campo descripcion no debe estar vacío",
+  "tipoDiagnostico": "El campo tipoDiagnostico no debe ser nulo"
+}
+```
+
+---
+
+## Update Diagnosis
+
+<CodeGroup>
+```bash cURL
+curl -X PUT http://localhost:8005/diagnosticos/1 \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "descripcion": "Hipertensión arterial esencial - Controlada",
+    "tipoDiagnostico": "DEFINITIVO",
+    "fechaDiagnostico": "2024-03-15T10:30:00",
+    "citaId": 101,
+    "pacienteId": 25
+  }'
+```
+</CodeGroup>
+
+**PUT** `/diagnosticos/{id}`
+
+Updates an existing diagnosis. All fields in the request body will replace the current values.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the diagnosis to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="descripcion" type="String" required>
+  Updated description of the diagnosis
+</ParamField>
+
+<ParamField body="tipoDiagnostico" type="TipoDiagnostico" required>
+  Updated type of diagnosis
+</ParamField>
+
+<ParamField body="fechaDiagnostico" type="Date" required>
+  Updated diagnosis date
+</ParamField>
+
+<ParamField body="citaId" type="Long" required>
+  Updated appointment ID
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  Updated patient ID
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="DiagnosticoEntity">
+  The updated diagnosis entity
+</ResponseField>
+
+### Status Codes
+
+- `201 Created`: Diagnosis successfully updated
+- `400 Bad Request`: Validation errors
+- `404 Not Found`: Diagnosis with specified ID does not exist
+
+### Example Request
+
+```json
+{
+  "descripcion": "Hipertensión arterial esencial - Controlada con medicación",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2024-03-15T10:30:00",
+  "citaId": 101,
+  "pacienteId": 25
+}
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "descripcion": "Hipertensión arterial esencial - Controlada con medicación",
+  "tipoDiagnostico": "DEFINITIVO",
+  "fechaDiagnostico": "2024-03-15T10:30:00",
+  "citaId": 101,
+  "pacienteId": 25,
+  "activo": true
+}
+```
+
+---
+
+## Delete Diagnosis (Soft Delete)
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE http://localhost:8005/diagnosticos/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**DELETE** `/diagnosticos/{id}`
+
+Performs a soft delete on a diagnosis. The record remains in the database with `activo` set to `false`.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the diagnosis to delete
+</ParamField>
+
+### Response
+
+No content returned on success.
+
+### Status Codes
+
+- `204 No Content`: Diagnosis successfully soft deleted
+- `404 Not Found`: Diagnosis with specified ID does not exist
+
+---
+
+## Delete Diagnosis Permanently
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE http://localhost:8005/diagnosticos/1/force \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+**DELETE** `/diagnosticos/{id}/force`
+
+Permanently deletes a diagnosis from the database. This operation is irreversible.
+
+<Warning>
+  This endpoint performs a hard delete and cannot be undone. Use with caution.
+</Warning>
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the diagnosis to permanently delete
+</ParamField>
+
+### Response
+
+No content returned on success.
+
+### Status Codes
+
+- `204 No Content`: Diagnosis permanently deleted
+- `404 Not Found`: Diagnosis with specified ID does not exist
+
+---
+
+## Common Response Codes
+
+All endpoints may return the following common status codes:
+
+| Code | Description |
+|------|-------------|
+| `200 OK` | Request successful (GET, PUT) |
+| `201 Created` | Resource created successfully (POST, PUT) |
+| `204 No Content` | Deletion successful (DELETE) |
+| `400 Bad Request` | Invalid request or validation errors |
+| `401 Unauthorized` | Missing or invalid authentication |
+| `404 Not Found` | Resource not found |
+| `500 Internal Server Error` | Server-side error |
+
+## Notes
+
+- All date fields use ISO 8601 format (`YYYY-MM-DDTHH:mm:ss`)
+- The `/con-detalle` endpoint performs inter-service communication and may have longer response times
+- Soft deleted diagnoses (`activo: false`) may still appear in some queries depending on the service implementation
+- Always use the `/force` endpoint with caution as it permanently removes data

@@ -1,0 +1,191 @@
+---
+title: "Appointment Service Overview"
+description: "Manage medical appointments between patients and doctors with scheduling, status tracking, and enriched data retrieval"
+---
+
+## Introduction
+
+The Appointment Service (Cita Service) manages the complete lifecycle of medical appointments in the NOVA.ing healthcare system. It coordinates scheduling between patients and doctors, tracks appointment states, and provides enriched appointment details by integrating data from Patient, Doctor, and Diagnostic services.
+
+## Base URL
+
+```
+/citas
+```
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Appointment Scheduling" icon="calendar-check">
+    Create and manage appointments with date, time, and purpose tracking
+  </Card>
+  <Card title="Status Management" icon="clock-rotate-left">
+    Track appointments through their lifecycle with state management
+  </Card>
+  <Card title="Patient & Doctor Filtering" icon="filter">
+    Retrieve appointments by patient or doctor for personalized views
+  </Card>
+  <Card title="Enriched Data" icon="arrows-to-circle">
+    Get complete appointment details with patient, doctor, and diagnostic information
+  </Card>
+</CardGroup>
+
+## Appointment States
+
+Appointments can be in one of four states managed by the `EstadoCita` enum:
+
+<ResponseField name="PROGRAMADA" type="string">
+  Appointment is scheduled and confirmed
+</ResponseField>
+
+<ResponseField name="CANCELADA" type="string">
+  Appointment has been cancelled by patient or doctor
+</ResponseField>
+
+<ResponseField name="REALIZADA" type="string">
+  Appointment has been completed
+</ResponseField>
+
+<ResponseField name="REPROGRAMADA" type="string">
+  Appointment has been rescheduled to a new date/time
+</ResponseField>
+
+## Core Appointment Model
+
+The `CitaEntity` represents an appointment in the system:
+
+<ResponseField name="id" type="Long">
+  Unique identifier for the appointment
+</ResponseField>
+
+<ResponseField name="fechaCita" type="Date" required>
+  Date of the appointment
+</ResponseField>
+
+<ResponseField name="horaInicio" type="Time" required>
+  Start time of the appointment
+</ResponseField>
+
+<ResponseField name="horaFin" type="Time" required>
+  End time of the appointment
+</ResponseField>
+
+<ResponseField name="motivo" type="String" required>
+  Reason or purpose for the appointment
+</ResponseField>
+
+<ResponseField name="estado" type="EstadoCita" required>
+  Current state of the appointment (PROGRAMADA, CANCELADA, REALIZADA, REPROGRAMADA)
+</ResponseField>
+
+<ResponseField name="pacienteId" type="Long" required>
+  ID of the patient for this appointment
+</ResponseField>
+
+<ResponseField name="medicoId" type="Long" required>
+  ID of the doctor for this appointment
+</ResponseField>
+
+## Enriched Appointment Details
+
+The `/con-detalle/{id}` endpoint returns a `CitaDetalle` object that includes:
+
+<ResponseField name="cita" type="CitaEntity">
+  The core appointment information
+</ResponseField>
+
+<ResponseField name="paciente" type="Paciente">
+  Complete patient information including:
+  - `id`: Patient identifier
+  - `nombres`: First name(s)
+  - `apellidos`: Last name(s)
+  - `dni`: National identification number
+  - `telefono`: Phone number
+  - `email`: Email address
+  - `fechaNacimiento`: Date of birth
+  - `direccion`: Physical address
+  - `estado`: Patient status
+</ResponseField>
+
+<ResponseField name="medico" type="Medico">
+  Complete doctor information including:
+  - `id`: Doctor identifier
+  - `nombres`: First name(s)
+  - `apellidos`: Last name(s)
+  - `especialidad`: Medical specialty
+  - `telefono`: Phone number
+  - `dni`: National identification number
+  - `email`: Email address
+  - `estado`: Doctor status
+</ResponseField>
+
+<ResponseField name="diagnosticos" type="List<Diagnostico>">
+  List of diagnoses associated with this appointment:
+  - `id`: Diagnosis identifier
+  - `descripcion`: Description of the diagnosis
+  - `tipoDiagnostico`: Type of diagnosis
+  - `fechaDiagnostico`: Date of diagnosis
+  - `citaId`: Associated appointment ID
+  - `pacienteId`: Patient ID
+</ResponseField>
+
+## Common Use Cases
+
+### Schedule a New Appointment
+
+Create an appointment by providing required patient, doctor, date/time, and reason information.
+
+### View Patient Appointments
+
+Retrieve all appointments for a specific patient to show their appointment history.
+
+### View Doctor Schedule
+
+Get all appointments for a doctor to display their schedule and availability.
+
+### Get Complete Appointment Details
+
+Fetch enriched appointment data including patient information, doctor details, and related diagnoses for a comprehensive view.
+
+### Update Appointment Status
+
+Modify appointment state (e.g., mark as completed, cancel, or reschedule).
+
+## Soft Delete vs. Hard Delete
+
+The service provides two deletion options:
+
+- **Soft Delete** (`DELETE /citas/{id}`): Marks the appointment as inactive while preserving the record
+- **Hard Delete** (`DELETE /citas/{id}/force`): Permanently removes the appointment from the database
+
+<Note>
+  Use soft delete for maintaining appointment history and audit trails. Use hard delete only when complete data removal is required.
+</Note>
+
+## Validation
+
+All create and update operations include validation:
+
+- Required fields must be present and non-null
+- Date and time values must be valid
+- Patient and doctor IDs must reference existing entities
+- Status must be a valid `EstadoCita` value
+
+Validation errors return a 400 Bad Request with field-specific error messages.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Endpoints" icon="code" href="/api/cita/endpoints">
+    Explore all available endpoints with examples
+  </Card>
+  <Card title="Patient Service" icon="user" href="/api/paciente/overview">
+    Learn about patient management
+  </Card>
+  <Card title="Doctor Service" icon="user-doctor" href="/api/medico/overview">
+    Learn about doctor management
+  </Card>
+  <Card title="Diagnostic Service" icon="notes-medical" href="/api/diagnostico/overview">
+    Learn about diagnostic management
+  </Card>
+</CardGroup>

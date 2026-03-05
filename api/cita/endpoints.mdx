@@ -1,0 +1,635 @@
+---
+title: "Appointment Endpoints"
+description: "Complete API reference for managing medical appointments"
+---
+
+## List All Appointments
+
+<api method="GET" path="/citas" />
+
+Retrieves all appointments in the system.
+
+### Response
+
+<ResponseField name="response" type="CitaEntity[]">
+  Array of appointment objects
+</ResponseField>
+
+<Expandable title="CitaEntity Properties">
+  <ResponseField name="id" type="Long">
+    Appointment identifier
+  </ResponseField>
+  <ResponseField name="fechaCita" type="Date">
+    Appointment date
+  </ResponseField>
+  <ResponseField name="horaInicio" type="Time">
+    Start time
+  </ResponseField>
+  <ResponseField name="horaFin" type="Time">
+    End time
+  </ResponseField>
+  <ResponseField name="motivo" type="String">
+    Appointment reason
+  </ResponseField>
+  <ResponseField name="estado" type="EstadoCita">
+    Appointment status (PROGRAMADA, CANCELADA, REALIZADA, REPROGRAMADA)
+  </ResponseField>
+  <ResponseField name="pacienteId" type="Long">
+    Patient ID
+  </ResponseField>
+  <ResponseField name="medicoId" type="Long">
+    Doctor ID
+  </ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8003/citas
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "fechaCita": "2026-03-15",
+    "horaInicio": "09:00:00",
+    "horaFin": "09:30:00",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "pacienteId": 1,
+    "medicoId": 1
+  },
+  {
+    "id": 2,
+    "fechaCita": "2026-03-16",
+    "horaInicio": "10:00:00",
+    "horaFin": "10:45:00",
+    "motivo": "Control post-operatorio",
+    "estado": "REALIZADA",
+    "pacienteId": 2,
+    "medicoId": 1
+  }
+]
+```
+
+---
+
+## Get Appointment by ID
+
+<api method="GET" path="/citas/{id}" />
+
+Retrieves a specific appointment by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the appointment
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaEntity">
+  The appointment object if found
+</ResponseField>
+
+### Status Codes
+
+- `200 OK`: Appointment found and returned
+- `404 Not Found`: Appointment does not exist
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8003/citas/1
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "fechaCita": "2026-03-15",
+  "horaInicio": "09:00:00",
+  "horaFin": "09:30:00",
+  "motivo": "Consulta general",
+  "estado": "PROGRAMADA",
+  "pacienteId": 1,
+  "medicoId": 1
+}
+```
+
+---
+
+## Get Appointment with Complete Details
+
+<api method="GET" path="/citas/con-detalle/{id}" />
+
+Retrieves a specific appointment with enriched data including patient information, doctor details, and associated diagnoses. This endpoint aggregates data from multiple microservices.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the appointment
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaDetalle">
+  Enriched appointment object with related entities
+</ResponseField>
+
+<Expandable title="CitaDetalle Properties">
+  <ResponseField name="cita" type="CitaEntity">
+    Core appointment information
+  </ResponseField>
+  
+  <ResponseField name="paciente" type="Paciente">
+    Complete patient information
+    <Expandable title="Paciente Properties">
+      <ResponseField name="id" type="Long">Patient ID</ResponseField>
+      <ResponseField name="nombres" type="String">First name(s)</ResponseField>
+      <ResponseField name="apellidos" type="String">Last name(s)</ResponseField>
+      <ResponseField name="dni" type="String">National ID</ResponseField>
+      <ResponseField name="telefono" type="String">Phone number</ResponseField>
+      <ResponseField name="email" type="String">Email address</ResponseField>
+      <ResponseField name="fechaNacimiento" type="Date">Birth date</ResponseField>
+      <ResponseField name="direccion" type="String">Address</ResponseField>
+      <ResponseField name="estado" type="String">Patient status</ResponseField>
+    </Expandable>
+  </ResponseField>
+  
+  <ResponseField name="medico" type="Medico">
+    Complete doctor information
+    <Expandable title="Medico Properties">
+      <ResponseField name="id" type="Long">Doctor ID</ResponseField>
+      <ResponseField name="nombres" type="String">First name(s)</ResponseField>
+      <ResponseField name="apellidos" type="String">Last name(s)</ResponseField>
+      <ResponseField name="especialidad" type="String">Medical specialty</ResponseField>
+      <ResponseField name="telefono" type="String">Phone number</ResponseField>
+      <ResponseField name="dni" type="String">National ID</ResponseField>
+      <ResponseField name="email" type="String">Email address</ResponseField>
+      <ResponseField name="estado" type="String">Doctor status</ResponseField>
+    </Expandable>
+  </ResponseField>
+  
+  <ResponseField name="diagnosticos" type="List<Diagnostico>">
+    List of diagnoses for this appointment
+    <Expandable title="Diagnostico Properties">
+      <ResponseField name="id" type="Long">Diagnosis ID</ResponseField>
+      <ResponseField name="descripcion" type="String">Diagnosis description</ResponseField>
+      <ResponseField name="tipoDiagnostico" type="String">Diagnosis type</ResponseField>
+      <ResponseField name="fechaDiagnostico" type="Date">Diagnosis date</ResponseField>
+      <ResponseField name="citaId" type="Long">Associated appointment ID</ResponseField>
+      <ResponseField name="pacienteId" type="Long">Patient ID</ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+
+### Status Codes
+
+- `200 OK`: Appointment found with complete details
+- `404 Not Found`: Appointment does not exist
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8003/citas/con-detalle/1
+```
+
+### Example Response
+
+```json
+{
+  "cita": {
+    "id": 1,
+    "fechaCita": "2026-03-15",
+    "horaInicio": "09:00:00",
+    "horaFin": "09:30:00",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "pacienteId": 1,
+    "medicoId": 1
+  },
+  "paciente": {
+    "id": 1,
+    "nombres": "Juan Carlos",
+    "apellidos": "Garcia Lopez",
+    "dni": "12345678",
+    "telefono": "987654321",
+    "email": "juan.garcia@email.com",
+    "fechaNacimiento": "1985-05-20",
+    "direccion": "Av. Principal 123, Lima",
+    "estado": "ACTIVO"
+  },
+  "medico": {
+    "id": 1,
+    "nombres": "Maria Elena",
+    "apellidos": "Rodriguez Santos",
+    "especialidad": "Medicina General",
+    "telefono": "912345678",
+    "dni": "87654321",
+    "email": "maria.rodriguez@hospital.com",
+    "estado": "ACTIVO"
+  },
+  "diagnosticos": []
+}
+```
+
+<Note>
+  This endpoint performs inter-service communication to fetch patient and doctor data from their respective microservices, as well as any diagnoses from the Diagnostic service.
+</Note>
+
+---
+
+## List Appointments by Patient
+
+<api method="GET" path="/citas/paciente/{id}" />
+
+Retrieves all appointments for a specific patient.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The patient ID to filter appointments
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaEntity[]">
+  Array of appointments for the specified patient
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8003/citas/paciente/1
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "fechaCita": "2026-03-15",
+    "horaInicio": "09:00:00",
+    "horaFin": "09:30:00",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "pacienteId": 1,
+    "medicoId": 1
+  },
+  {
+    "id": 5,
+    "fechaCita": "2026-02-10",
+    "horaInicio": "14:00:00",
+    "horaFin": "14:30:00",
+    "motivo": "Chequeo anual",
+    "estado": "REALIZADA",
+    "pacienteId": 1,
+    "medicoId": 2
+  }
+]
+```
+
+---
+
+## List Appointments by Doctor
+
+<api method="GET" path="/citas/medico/{id}" />
+
+Retrieves all appointments for a specific doctor.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The doctor ID to filter appointments
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaEntity[]">
+  Array of appointments for the specified doctor
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8003/citas/medico/1
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "fechaCita": "2026-03-15",
+    "horaInicio": "09:00:00",
+    "horaFin": "09:30:00",
+    "motivo": "Consulta general",
+    "estado": "PROGRAMADA",
+    "pacienteId": 1,
+    "medicoId": 1
+  },
+  {
+    "id": 2,
+    "fechaCita": "2026-03-16",
+    "horaInicio": "10:00:00",
+    "horaFin": "10:45:00",
+    "motivo": "Control post-operatorio",
+    "estado": "REALIZADA",
+    "pacienteId": 2,
+    "medicoId": 1
+  }
+]
+```
+
+---
+
+## Create Appointment
+
+<api method="POST" path="/citas" />
+
+Creates a new appointment in the system.
+
+### Request Body
+
+<ParamField body="fechaCita" type="Date" required>
+  Date of the appointment (format: YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="horaInicio" type="Time" required>
+  Start time of the appointment (format: HH:MM:SS)
+</ParamField>
+
+<ParamField body="horaFin" type="Time" required>
+  End time of the appointment (format: HH:MM:SS)
+</ParamField>
+
+<ParamField body="motivo" type="String" required>
+  Reason or purpose for the appointment
+</ParamField>
+
+<ParamField body="estado" type="EstadoCita" required>
+  Initial status (typically PROGRAMADA)
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  ID of the patient
+</ParamField>
+
+<ParamField body="medicoId" type="Long" required>
+  ID of the doctor
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaEntity">
+  The created appointment object with generated ID
+</ResponseField>
+
+### Status Codes
+
+- `201 Created`: Appointment successfully created
+- `400 Bad Request`: Validation errors or business rule violations
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8003/citas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fechaCita": "2026-03-20",
+    "horaInicio": "15:00:00",
+    "horaFin": "15:30:00",
+    "motivo": "Consulta de seguimiento",
+    "estado": "PROGRAMADA",
+    "pacienteId": 3,
+    "medicoId": 2
+  }'
+```
+
+### Example Success Response
+
+```json
+{
+  "id": 10,
+  "fechaCita": "2026-03-20",
+  "horaInicio": "15:00:00",
+  "horaFin": "15:30:00",
+  "motivo": "Consulta de seguimiento",
+  "estado": "PROGRAMADA",
+  "pacienteId": 3,
+  "medicoId": 2
+}
+```
+
+### Example Error Response
+
+```json
+{
+  "fechaCita": "El campo fechaCita no debe ser nulo",
+  "motivo": "El campo motivo no debe estar en blanco"
+}
+```
+
+<Note>
+  The service validates that the patient and doctor exist before creating the appointment. If either ID is invalid, a 400 error will be returned.
+</Note>
+
+---
+
+## Update Appointment
+
+<api method="PUT" path="/citas/{id}" />
+
+Updates an existing appointment.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the appointment to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="fechaCita" type="Date" required>
+  Date of the appointment
+</ParamField>
+
+<ParamField body="horaInicio" type="Time" required>
+  Start time of the appointment
+</ParamField>
+
+<ParamField body="horaFin" type="Time" required>
+  End time of the appointment
+</ParamField>
+
+<ParamField body="motivo" type="String" required>
+  Reason or purpose for the appointment
+</ParamField>
+
+<ParamField body="estado" type="EstadoCita" required>
+  Appointment status (PROGRAMADA, CANCELADA, REALIZADA, REPROGRAMADA)
+</ParamField>
+
+<ParamField body="pacienteId" type="Long" required>
+  ID of the patient
+</ParamField>
+
+<ParamField body="medicoId" type="Long" required>
+  ID of the doctor
+</ParamField>
+
+### Response
+
+<ResponseField name="response" type="CitaEntity">
+  The updated appointment object
+</ResponseField>
+
+### Status Codes
+
+- `201 Created`: Appointment successfully updated
+- `400 Bad Request`: Validation errors or business rule violations
+- `404 Not Found`: Appointment does not exist
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:8003/citas/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fechaCita": "2026-03-22",
+    "horaInicio": "10:00:00",
+    "horaFin": "10:30:00",
+    "motivo": "Consulta general - Reprogramada",
+    "estado": "REPROGRAMADA",
+    "pacienteId": 1,
+    "medicoId": 1
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "fechaCita": "2026-03-22",
+  "horaInicio": "10:00:00",
+  "horaFin": "10:30:00",
+  "motivo": "Consulta general - Reprogramada",
+  "estado": "REPROGRAMADA",
+  "pacienteId": 1,
+  "medicoId": 1
+}
+```
+
+<Warning>
+  The update operation replaces all fields. Make sure to include all required fields in the request body.
+</Warning>
+
+---
+
+## Delete Appointment (Soft Delete)
+
+<api method="DELETE" path="/citas/{id}" />
+
+Performs a soft delete of an appointment, marking it as inactive while preserving the record.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the appointment to delete
+</ParamField>
+
+### Status Codes
+
+- `204 No Content`: Appointment successfully deleted
+- `404 Not Found`: Appointment does not exist
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:8003/citas/1
+```
+
+<Info>
+  Soft delete preserves the appointment record in the database for audit and historical purposes. The appointment will no longer appear in standard queries but can be recovered if needed.
+</Info>
+
+---
+
+## Delete Appointment Permanently (Hard Delete)
+
+<api method="DELETE" path="/citas/{id}/force" />
+
+Permanently removes an appointment from the database. This operation is irreversible.
+
+### Path Parameters
+
+<ParamField path="id" type="Long" required>
+  The unique identifier of the appointment to permanently delete
+</ParamField>
+
+### Status Codes
+
+- `204 No Content`: Appointment successfully deleted
+- `404 Not Found`: Appointment does not exist
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:8003/citas/1/force
+```
+
+<Warning>
+  Hard delete is irreversible and removes all traces of the appointment from the database. Use with caution and only when complete data removal is required for compliance or data retention policies.
+</Warning>
+
+---
+
+## Error Responses
+
+All endpoints may return the following error responses:
+
+### Validation Errors (400 Bad Request)
+
+```json
+{
+  "fechaCita": "El campo fechaCita no debe ser nulo",
+  "motivo": "El campo motivo no debe estar en blanco",
+  "pacienteId": "El campo pacienteId no debe ser nulo"
+}
+```
+
+### Business Rule Violations (400 Bad Request)
+
+```json
+{
+  "error": "El paciente con ID 999 no existe"
+}
+```
+
+### Not Found (404 Not Found)
+
+Returns an empty response body with 404 status code when the requested appointment does not exist.
+
+---
+
+## Related Services
+
+<CardGroup cols={3}>
+  <Card title="Patient Service" icon="user" href="/api/paciente/overview">
+    Manage patient records
+  </Card>
+  <Card title="Doctor Service" icon="user-doctor" href="/api/medico/overview">
+    Manage doctor records
+  </Card>
+  <Card title="Diagnostic Service" icon="notes-medical" href="/api/diagnostico/overview">
+    Manage diagnoses
+  </Card>
+</CardGroup>
